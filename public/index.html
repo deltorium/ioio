@@ -16,6 +16,7 @@ html,body{width:100%;height:100%;overflow:hidden;
   font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
   background:var(--bg);color:var(--txt);user-select:none;touch-action:manipulation}
 
+/* ═══ ROTATE ═══ */
 #rotate{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;gap:20px}
 #rotate .ri{font-size:56px;animation:rr 2s ease-in-out infinite}
@@ -24,6 +25,7 @@ html,body{width:100%;height:100%;overflow:hidden;
 @media(orientation:portrait)and(max-width:900px){
   #rotate{display:flex}#app{display:none!important}}
 
+/* ═══ LOADER ═══ */
 #loader{position:fixed;inset:0;background:var(--bg);z-index:9998;
   display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .5s}
 .spinner{width:42px;height:42px;border:3px solid var(--brd);border-top-color:var(--acc);
@@ -31,6 +33,7 @@ html,body{width:100%;height:100%;overflow:hidden;
 @keyframes spin{to{transform:rotate(360deg)}}
 #loader.hide{opacity:0;pointer-events:none}
 
+/* ═══ SCREENS ═══ */
 #app{width:100vw;height:100vh;position:relative}
 .scr{display:none;position:absolute;inset:0}.scr.on{display:flex}
 
@@ -43,17 +46,13 @@ html,body{width:100%;height:100%;overflow:hidden;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   animation:glo 3s ease-in-out infinite}
 @keyframes glo{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
-
 #menu-status{text-align:center;margin:10px 0;min-height:24px}
-#menu-status .ok{color:var(--ok);font-size:14px}
-#menu-status .no{color:var(--bad);font-size:14px}
-#menu-status .info{color:var(--sub);font-size:13px}
-
+#menu-status .st-ok{color:var(--ok);font-size:14px}
+#menu-status .st-no{color:var(--bad);font-size:14px}
 .bplay{padding:16px 64px;font-size:20px;font-weight:700;background:var(--acc);color:#fff;
   border:none;border-radius:50px;cursor:pointer;transition:.3s;letter-spacing:2px;text-transform:uppercase}
 .bplay:hover{background:var(--acc2);transform:scale(1.05);box-shadow:0 0 40px rgba(233,69,96,.4)}
-.bplay:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
-
+.bplay:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important}
 .bgear{position:absolute;top:14px;right:14px;width:44px;height:44px;
   background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;
   color:var(--sub);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.3s}
@@ -69,7 +68,6 @@ html,body{width:100%;height:100%;overflow:hidden;
 .mx{background:0;border:0;color:var(--sub);font-size:22px;cursor:pointer;padding:4px}
 .mx:hover{color:var(--txt)}
 .mlg{width:90vw;max-width:820px}
-
 .fg{margin-bottom:15px}
 .fg label{display:block;font-size:11px;color:var(--sub);margin-bottom:5px;
   font-weight:600;text-transform:uppercase;letter-spacing:.8px}
@@ -82,7 +80,6 @@ html,body{width:100%;height:100%;overflow:hidden;
 .fbtn{display:inline-block;padding:8px 20px;background:rgba(255,255,255,.08);
   border:1px solid var(--brd);border-radius:8px;color:var(--txt);font-size:14px;cursor:pointer;transition:.3s}
 .fbtn:hover{background:rgba(255,255,255,.15)}
-
 .bp{padding:10px 24px;background:var(--acc);color:#fff;border:0;border-radius:8px;font-size:14px;cursor:pointer;transition:.3s}
 .bp:hover{background:var(--acc2)}
 .bs{padding:10px 24px;background:rgba(255,255,255,.08);color:var(--txt);
@@ -94,60 +91,119 @@ html,body{width:100%;height:100%;overflow:hidden;
 .brow{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
 .err-msg{color:var(--bad);font-size:13px;margin-top:-8px;margin-bottom:10px}
 
-/* ═══ GAME ═══ */
-#S-game{flex-direction:column;position:relative;background:#000}
+/* ═══════════════════════════════════════════
+   GAME SCREEN — all fixed
+   ═══════════════════════════════════════════ */
+#S-game{
+  flex-direction:column;
+  position:relative;
+  /* visible gradient instead of pure black */
+  background:linear-gradient(135deg,#0d0d2b 0%,#1a1040 50%,#0d0d2b 100%);
+}
 
-#g-bg{position:absolute;inset:0;background-size:cover;background-position:center;
-  background-color:#1a1a2e;opacity:0;transition:opacity .7s;z-index:0}
-#g-bg.vis{opacity:1}
+/* background image layer */
+#g-bg{
+  position:absolute;inset:0;z-index:0;
+  background-size:cover;
+  background-position:center;
+  background-color:#1a1a2e;
+  transition:background-image .5s ease;
+}
 
-#g-dim{position:absolute;inset:0;background:rgba(0,0,0,.1);z-index:1}
+/* slight dim over background */
+#g-dim{position:absolute;inset:0;background:rgba(0,0,0,.08);z-index:1;pointer-events:none}
 
-#g-char{position:absolute;bottom:0;height:78%;max-width:42%;object-fit:contain;
-  z-index:2;pointer-events:none;opacity:0;transition:opacity .45s,left .4s,right .4s}
+/* character sprite */
+#g-char{
+  position:absolute;bottom:0;z-index:2;
+  height:78%;max-width:42%;object-fit:contain;
+  pointer-events:none;
+  opacity:0;transition:opacity .4s;
+}
 #g-char.vis{opacity:1}
 #g-char.pl{left:3%}
 #g-char.pc{left:50%;transform:translateX(-50%)}
 #g-char.pr{right:3%;left:auto}
 
-/* ─── dialogue box: solid visible background ─── */
-#g-dlg{position:absolute;bottom:0;left:0;right:0;z-index:5;cursor:pointer;min-height:28%}
-#g-dlg-bg{position:absolute;inset:0;
-  background:linear-gradient(to top,
-    rgba(6,6,24,.97) 0%,
-    rgba(6,6,24,.95) 60%,
-    rgba(6,6,24,.7) 85%,
-    transparent 100%);
-  pointer-events:none}
-#g-dlg-inner{position:relative;z-index:1;padding:40px 44px 24px}
+/* ─── DIALOGUE BOX: solid visible background ─── */
+#g-dlg{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  z-index:5;
+  cursor:pointer;
+  /* solid dark background — always visible */
+  background:rgba(8,8,30,.95);
+  border-top:2px solid rgba(233,69,96,.3);
+  min-height:25vh;
+  padding:20px 40px 20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
 
-#g-name{display:inline-block;padding:6px 20px;background:var(--acc);border-radius:8px 8px 0 0;
-  font-size:clamp(13px,1.6vw,17px);font-weight:700;color:#fff;margin-bottom:4px}
+#g-name-wrap{margin-bottom:8px}
+#g-name{
+  display:inline-block;
+  padding:5px 18px;
+  background:var(--acc);
+  border-radius:8px;
+  font-size:clamp(13px,1.6vw,17px);
+  font-weight:700;
+  color:#fff;
+}
 #g-name:empty{display:none}
-#g-txt{font-size:clamp(14px,1.8vw,19px);line-height:1.7;white-space:pre-wrap;min-height:2em;
-  color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)}
-#g-ind{position:absolute;bottom:14px;right:24px;font-size:14px;color:rgba(255,255,255,.5);animation:bk 1.4s infinite}
+
+#g-txt{
+  font-size:clamp(15px,1.8vw,20px);
+  line-height:1.7;
+  white-space:pre-wrap;
+  min-height:2em;
+  color:#ffffff;
+}
+
+#g-ind{
+  position:absolute;
+  bottom:14px;right:24px;
+  font-size:14px;
+  color:rgba(255,255,255,.4);
+  animation:bk 1.4s infinite;
+}
 @keyframes bk{0%,100%{opacity:1}50%{opacity:.2}}
 
-#g-choices{position:absolute;inset:0;z-index:10;display:none;flex-direction:column;
-  align-items:center;justify-content:center;gap:12px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px)}
+/* choices overlay */
+#g-choices{
+  position:absolute;inset:0;z-index:10;
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+}
 #g-choices.on{display:flex}
-.chb{padding:14px 44px;min-width:260px;max-width:80%;background:rgba(20,20,50,.92);
-  border:2px solid var(--acc);border-radius:12px;color:var(--txt);
-  font-size:clamp(13px,1.7vw,17px);cursor:pointer;transition:.3s;text-align:center}
+.chb{padding:14px 44px;min-width:260px;max-width:80%;
+  background:rgba(20,20,50,.95);border:2px solid var(--acc);border-radius:12px;
+  color:#fff;font-size:clamp(13px,1.7vw,17px);cursor:pointer;transition:.3s;text-align:center}
 .chb:hover{background:var(--acc);transform:scale(1.03)}
 
+/* back button */
 .bbk{position:absolute;top:10px;left:10px;z-index:20;padding:8px 18px;
   background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);border-radius:8px;
-  color:var(--txt);font-size:13px;cursor:pointer;transition:.3s}
+  color:#fff;font-size:13px;cursor:pointer;transition:.3s}
 .bbk:hover{background:rgba(0,0,0,.85)}
 
+/* end screen */
 #g-end{position:absolute;inset:0;z-index:15;display:none;flex-direction:column;
   align-items:center;justify-content:center;background:rgba(0,0,0,.88);gap:30px}
 #g-end.on{display:flex}
 #g-end h2{font-size:clamp(28px,4vw,48px);
   background:linear-gradient(135deg,var(--acc),var(--acc2));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* debug overlay */
+#g-debug{
+  position:absolute;top:10px;right:10px;z-index:20;
+  background:rgba(0,0,0,.7);color:#0f0;font-size:11px;
+  padding:6px 10px;border-radius:6px;font-family:monospace;
+  display:none;max-width:300px;word-break:break-all;
+}
 
 /* ═══ DEV PANEL ═══ */
 #S-dev{flex-direction:column;background:var(--bg)}
@@ -160,7 +216,6 @@ html,body{width:100%;height:100%;overflow:hidden;
 .dt:hover{color:var(--txt);background:rgba(255,255,255,.04)}
 .dt.on{color:var(--acc);border-bottom-color:var(--acc)}
 .dc{flex:1;overflow-y:auto;padding:20px}
-
 .dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:15px}
 .dcard{background:var(--card);border:1px solid var(--brd);border-radius:12px;overflow:hidden;
   cursor:pointer;transition:.3s}
@@ -175,7 +230,6 @@ html,body{width:100%;height:100%;overflow:hidden;
 .dcadd span{font-size:13px;color:var(--sub)}
 .dcard.start{border-color:var(--ok)}
 .dcard.start .dcs{color:var(--ok)}
-
 .steps{display:flex;flex-direction:column;gap:12px;margin-top:10px}
 .si{background:var(--inp);border:1px solid var(--brd);border-radius:10px;padding:14px}
 .sih{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -217,8 +271,7 @@ html,body{width:100%;height:100%;overflow:hidden;
 ::-webkit-scrollbar-track{background:0}
 ::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}
 @media(max-height:500px){
-  #g-dlg{min-height:34%}
-  #g-dlg-inner{padding:24px 28px 16px}
+  #g-dlg{min-height:30vh;padding:14px 24px 14px}
   .bplay{padding:12px 40px;font-size:17px}
 }
 </style>
@@ -248,13 +301,11 @@ html,body{width:100%;height:100%;overflow:hidden;
   <div id="g-bg"></div>
   <div id="g-dim"></div>
   <img id="g-char" src="" alt="">
+  <div id="g-debug"></div>
   <div id="g-dlg" onclick="advance()">
-    <div id="g-dlg-bg"></div>
-    <div id="g-dlg-inner">
-      <div id="g-name"></div>
-      <div id="g-txt"></div>
-      <div id="g-ind">▼</div>
-    </div>
+    <div id="g-name-wrap"><span id="g-name"></span></div>
+    <div id="g-txt"></div>
+    <div id="g-ind">▼</div>
   </div>
   <div id="g-choices"></div>
   <div id="g-end">
@@ -283,7 +334,10 @@ html,body{width:100%;height:100%;overflow:hidden;
 <!-- ══ MODALS ══ -->
 <div class="modal" id="M-code"><div class="mbox">
   <h2>Введите код доступа</h2>
-  <div class="fg"><input type="password" id="i-code" placeholder="Код…" maxlength="10"></div>
+  <div class="fg">
+    <label for="i-code">Код</label>
+    <input type="password" id="i-code" name="access-code" placeholder="Код…" maxlength="10">
+  </div>
   <div class="err-msg" id="code-err" style="display:none">Неверный код</div>
   <div class="brow">
     <button class="bp" onclick="checkCode()">Войти</button>
@@ -293,11 +347,18 @@ html,body{width:100%;height:100%;overflow:hidden;
 
 <div class="modal" id="M-bg"><div class="mbox mlg">
   <h2><span id="bg-t">Добавить фон</span><button class="mx" onclick="hideM('M-bg')">✕</button></h2>
-  <div class="fg"><label>Название</label><input id="bg-name" placeholder="Лес, Школа…"></div>
-  <div class="fg"><label>Изображение</label>
-    <label class="fbtn">📁 Выбрать<input type="file" accept="image/*" id="bg-file" style="display:none"
-      onchange="pvF(this,'bg-pv',1920,1080,false,'_bgD')"></label>
-    <img id="bg-pv" class="ipv" style="display:none"></div>
+  <div class="fg">
+    <label for="bg-name">Название</label>
+    <input id="bg-name" name="bg-name" placeholder="Лес, Школа…">
+  </div>
+  <div class="fg">
+    <label for="bg-file">Изображение</label>
+    <label class="fbtn">📁 Выбрать
+      <input type="file" accept="image/*" id="bg-file" name="bg-file" style="display:none"
+        onchange="pvF(this,'bg-pv',1920,1080,false,'_bgD')">
+    </label>
+    <img id="bg-pv" class="ipv" style="display:none">
+  </div>
   <div class="brow">
     <button class="bp" onclick="saveBg()">Сохранить</button>
     <button class="bd" id="bg-del" style="display:none" onclick="delBg()">Удалить</button>
@@ -306,11 +367,18 @@ html,body{width:100%;height:100%;overflow:hidden;
 
 <div class="modal" id="M-ch"><div class="mbox mlg">
   <h2><span id="ch-t">Добавить персонажа</span><button class="mx" onclick="hideM('M-ch')">✕</button></h2>
-  <div class="fg"><label>Имя</label><input id="ch-name" placeholder="Имя персонажа"></div>
-  <div class="fg"><label>Спрайт (PNG)</label>
-    <label class="fbtn">📁 Выбрать<input type="file" accept="image/*" id="ch-file" style="display:none"
-      onchange="pvF(this,'ch-pv',600,900,true,'_chD')"></label>
-    <img id="ch-pv" class="ipv" style="display:none"></div>
+  <div class="fg">
+    <label for="ch-name">Имя</label>
+    <input id="ch-name" name="ch-name" placeholder="Имя персонажа">
+  </div>
+  <div class="fg">
+    <label for="ch-file">Спрайт (PNG)</label>
+    <label class="fbtn">📁 Выбрать
+      <input type="file" accept="image/*" id="ch-file" name="ch-file" style="display:none"
+        onchange="pvF(this,'ch-pv',600,900,true,'_chD')">
+    </label>
+    <img id="ch-pv" class="ipv" style="display:none">
+  </div>
   <div class="brow">
     <button class="bp" onclick="saveCh()">Сохранить</button>
     <button class="bd" id="ch-del" style="display:none" onclick="delCh()">Удалить</button>
@@ -326,10 +394,20 @@ html,body{width:100%;height:100%;overflow:hidden;
 
 <script>
 const CODE='050412';
+const DEBUG=true; // поставьте false чтобы скрыть отладку
+
 let D={title:'Я НЕ ПРИДУМАЛ',bgs:[],chars:[],scenes:[],start:null};
 let curTab='bg',editId=null,eScData=null;
 window._bgD=null;window._chD=null;
 let G={sid:null,step:0,typing:false,timer:null,full:''};
+
+/* ═══ DEBUG ═══ */
+function dbg(msg){
+  console.log('[VN]',msg);
+  if(!DEBUG)return;
+  const el=$('g-debug');
+  if(el){el.style.display='block';el.textContent=msg}
+}
 
 /* ═══ API ═══ */
 async function api(method,body){
@@ -343,7 +421,6 @@ async function api(method,body){
 }
 
 async function loadData(){
-  console.log('Loading data from server...');
   const d=await api('GET');
   if(d){
     D=d;
@@ -351,14 +428,14 @@ async function loadData(){
     D.bgs=D.bgs||[];
     D.chars=D.chars||[];
     D.scenes=D.scenes||[];
-    console.log('Data loaded:',D.scenes.length,'scenes, start:',D.start);
-  }else{
-    console.error('Failed to load data from server');
+    console.log('[VN] Loaded:',D.scenes.length,'scenes, start=',D.start);
+    return true;
   }
+  console.error('[VN] Failed to load data');
+  return false;
 }
 
 async function save(){
-  console.log('Saving data...',D.scenes.length,'scenes');
   const ok=await api('POST',D);
   if(!ok)toast('Ошибка сохранения!',1);
   return !!ok;
@@ -373,7 +450,6 @@ function $(id){return document.getElementById(id)}
 function scr(id){
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
   $(id).classList.add('on');
-  console.log('Screen:',id);
 }
 function showM(id){$(id).classList.add('on')}
 function hideM(id){$(id).classList.remove('on')}
@@ -383,31 +459,27 @@ function toast(m,err){
   t.style.background=err?'var(--bad)':'var(--ok)';
   t.style.color=err?'#fff':'#000';
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3500);
+  setTimeout(()=>t.classList.remove('show'),4000);
 }
 
 function updateMenu(){
   $('m-title').textContent=D.title||'Я НЕ ПРИДУМАЛ';
-
   const startScene=D.start?D.scenes.find(s=>s.id===D.start):null;
   const st=$('menu-status');
   const btn=$('btn-play');
 
   if(!D.scenes.length){
-    st.innerHTML='<div class="no">❌ Новелла пуста. Нажмите 🔧 чтобы создать контент</div>';
+    st.innerHTML='<div class="st-no">❌ Новелла пуста — нажмите 🔧 для создания</div>';
     btn.disabled=true;
   }else if(!D.start||!startScene){
-    st.innerHTML='<div class="no">⚠️ Не выбрана начальная сцена. Настройте в 🔧 → Настройки</div>';
+    st.innerHTML='<div class="st-no">⚠️ Не выбрана начальная сцена — 🔧 → Настройки</div>';
+    btn.disabled=true;
+  }else if(!startScene.steps||!startScene.steps.length){
+    st.innerHTML='<div class="st-no">⚠️ Начальная сцена пуста — добавьте шаги</div>';
     btn.disabled=true;
   }else{
-    const hasSteps=startScene.steps&&startScene.steps.length>0;
-    if(!hasSteps){
-      st.innerHTML='<div class="no">⚠️ Начальная сцена пуста</div>';
-      btn.disabled=true;
-    }else{
-      st.innerHTML=`<div class="ok">✅ Готово: ${D.scenes.length} сцен(ы)</div>`;
-      btn.disabled=false;
-    }
+    st.innerHTML=`<div class="st-ok">✅ ${D.scenes.length} сцен(ы) · Начальная: ${esc(startScene.name)}</div>`;
+    btn.disabled=false;
   }
 }
 
@@ -456,7 +528,7 @@ function aBg(){editId=null;_bgD=null;$('bg-t').textContent='Добавить ф�
   $('bg-name').value='';$('bg-file').value='';$('bg-pv').style.display='none';
   $('bg-del').style.display='none';showM('M-bg')}
 function eBg(id){const b=D.bgs.find(x=>x.id===id);if(!b)return;
-  editId=id;_bgD=null;$('bg-t').textContent='Редактировать фон';
+  editId=id;_bgD=null;$('bg-t').textContent='Редактировать';
   $('bg-name').value=b.name;$('bg-file').value='';
   $('bg-pv').src=b.data;$('bg-pv').style.display='block';
   $('bg-del').style.display='inline-block';showM('M-bg')}
@@ -538,8 +610,8 @@ function rScEd(){const sc=eScData;
       chcH='<div class="csec"><label style="font-size:11px;color:var(--sub)">Варианты:</label>';
       (st.choices||[]).forEach((ch,ci)=>{
         const csO=allSc.map(s=>`<option value="${s.id}"${ch.target===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
-        chcH+=`<div class="crow"><input class="sc-ct" value="${esc(ch.text)}" placeholder="Текст">
-          <select class="sc-cs"><option value="">→ Сцена…</option>${csO}</select>
+        chcH+=`<div class="crow"><input class="sc-ct" name="choice-text-${i}-${ci}" value="${esc(ch.text)}" placeholder="Текст">
+          <select class="sc-cs" name="choice-scene-${i}-${ci}"><option value="">→ Сцена…</option>${csO}</select>
           <button onclick="gather();eScData.steps[${i}].choices.splice(${ci},1);rScEd()">✕</button></div>`});
       chcH+=`<button class="bsm" onclick="gather();eScData.steps[${i}].choices.push({text:'',target:null});rScEd()">+ Вариант</button></div>`}
     stH+=`<div class="si"><div class="sih"><span class="sin">Шаг ${i+1}</span><div class="sia">
@@ -548,27 +620,27 @@ function rScEd(){const sc=eScData;
       ${sc.steps.length>1?`<button onclick="gather();eScData.steps.splice(${i},1);rScEd()">✕</button>`:''}
     </div></div>
     <div class="sf">
-      <div><label>Персонаж</label><select class="sc-ch"><option value="">— Рассказчик —</option>${chO}</select></div>
-      <div><label>Позиция</label><select class="sc-ps">
+      <div><label for="sc-ch-${i}">Персонаж</label><select class="sc-ch" id="sc-ch-${i}" name="sc-ch-${i}"><option value="">— Рассказчик —</option>${chO}</select></div>
+      <div><label for="sc-ps-${i}">Позиция</label><select class="sc-ps" id="sc-ps-${i}" name="sc-ps-${i}">
         <option value="left"${st.pos==='left'?' selected':''}>Слева</option>
         <option value="center"${st.pos==='center'?' selected':''}>По центру</option>
         <option value="right"${st.pos==='right'?' selected':''}>Справа</option></select></div>
-      <div class="fw"><label>Текст</label><textarea class="sc-tx" placeholder="Диалог…">${esc(st.text)}</textarea></div>
+      <div class="fw"><label for="sc-tx-${i}">Текст</label><textarea class="sc-tx" id="sc-tx-${i}" name="sc-tx-${i}" placeholder="Диалог…">${esc(st.text)}</textarea></div>
     </div>
     <div class="cbtog">
-      <input type="checkbox" id="cb${i}"${st.hasCh?' checked':''}
+      <input type="checkbox" id="cb${i}" name="cb${i}"${st.hasCh?' checked':''}
         onchange="gather();eScData.steps[${i}].hasCh=this.checked;if(this.checked&&(!eScData.steps[${i}].choices||!eScData.steps[${i}].choices.length))eScData.steps[${i}].choices=[{text:'',target:null}];rScEd()">
       <label for="cb${i}">Варианты выбора</label>
     </div>${chcH}</div>`});
 
   const nxO=allSc.map(s=>`<option value="${s.id}"${sc.next===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
   $('sc-ed').innerHTML=`
-    <div class="fg"><label>Название</label><input id="sce-name" value="${esc(sc.name)}" placeholder="Название…"></div>
-    <div class="fg"><label>Фон</label><select id="sce-bg"><option value="">— Без фона —</option>${bgO}</select></div>
+    <div class="fg"><label for="sce-name">Название</label><input id="sce-name" name="sce-name" value="${esc(sc.name)}" placeholder="Название…"></div>
+    <div class="fg"><label for="sce-bg">Фон</label><select id="sce-bg" name="sce-bg"><option value="">— Без фона —</option>${bgO}</select></div>
     <div class="fg"><label>Шаги</label><div class="steps">${stH}</div>
       <button class="bsm" onclick="gather();eScData.steps.push(mkStep());rScEd()" style="margin-top:12px">+ Шаг</button></div>
-    <div class="fg"><label>Следующая сцена</label>
-      <select id="sce-next"><option value="">— Конец —</option>${nxO}</select></div>
+    <div class="fg"><label for="sce-next">Следующая сцена</label>
+      <select id="sce-next" name="sce-next"><option value="">— Конец —</option>${nxO}</select></div>
     <div class="brow" style="margin-top:18px">
       <button class="bp" onclick="saveSc()">Сохранить</button>
       ${editId?'<button class="bd" onclick="delSc()">Удалить</button>':''}</div>`}
@@ -591,14 +663,16 @@ function rSettings(c){
   const scO=D.scenes.map(s=>`<option value="${s.id}"${D.start===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
   c.innerHTML=`
     <div class="setsec"><h3>✏️ Название</h3><div class="fg">
-      <input value="${esc(D.title)}" onchange="D.title=this.value;save();updateMenu();toast('Обновлено')"></div></div>
+      <label for="set-title">Заголовок новеллы</label>
+      <input id="set-title" name="set-title" value="${esc(D.title)}" onchange="D.title=this.value;save();updateMenu();toast('Обновлено')"></div></div>
     <div class="setsec"><h3>⭐ Начальная сцена</h3><div class="fg">
-      <select onchange="D.start=this.value||null;save();toast('Обновлено')">
+      <label for="set-start">Выберите сцену</label>
+      <select id="set-start" name="set-start" onchange="D.start=this.value||null;save();updateMenu();toast('Обновлено')">
         <option value="">— Не выбрана —</option>${scO}</select></div></div>
     <div class="setsec"><h3>💾 Экспорт / Импорт</h3><div class="brow">
       <button class="bs" onclick="expD()">📤 Экспорт</button>
       <label class="bs" style="cursor:pointer">📥 Импорт
-        <input type="file" accept=".json" style="display:none" onchange="impD(this)"></label></div></div>
+        <input type="file" accept=".json" name="import-file" style="display:none" onchange="impD(this)"></label></div></div>
     <div class="setsec"><h3>🗑 Очистка</h3>
       <p style="color:var(--sub);font-size:13px;margin-bottom:10px">Удалить все данные.</p>
       <button class="bd" onclick="clearAll()">Удалить всё</button></div>
@@ -614,139 +688,144 @@ async function clearAll(){if(!confirm('Удалить ВСЕ?'))return;
   D={title:'Я НЕ ПРИДУМАЛ',bgs:[],chars:[],scenes:[],start:null};
   await save();renderTab();updateMenu();toast('Очищено')}
 
-/* ═══════════════ GAME ENGINE ═══════════════ */
-async function startGame(){
-  console.log('=== START GAME ===');
 
-  // загружаем актуальные данные
-  await loadData();
+/* ═══════════════════════════════════════════
+   GAME ENGINE — simplified, no double timeout
+   ═══════════════════════════════════════════ */
+
+async function startGame(){
+  dbg('Загрузка данных...');
+
+  const ok=await loadData();
   updateMenu();
 
-  // проверки
+  if(!ok){
+    toast('Ошибка загрузки данных с сервера!',1);
+    return;
+  }
+
   if(!D.scenes.length){
-    toast('Новелла пуста! Сначала создайте контент через 🔧',1);
+    toast('Новелла пуста! Создайте контент через 🔧',1);
     return;
   }
 
-  const startScene = D.scenes.find(s=>s.id===D.start);
-  if(!D.start || !startScene){
-    toast('Не выбрана начальная сцена! Настройте через 🔧 → Настройки',1);
+  const startScene=D.scenes.find(s=>s.id===D.start);
+  if(!D.start||!startScene){
+    toast('Не выбрана начальная сцена! 🔧 → Настройки',1);
     return;
   }
 
-  if(!startScene.steps || !startScene.steps.length){
-    toast('Начальная сцена пуста! Добавьте шаги диалога',1);
+  if(!startScene.steps||!startScene.steps.length){
+    toast('В начальной сцене нет шагов диалога!',1);
     return;
   }
 
-  console.log('Starting scene:',startScene.name,'steps:',startScene.steps.length);
+  dbg('Запуск: '+startScene.name+' ('+startScene.steps.length+' шагов)');
 
-  // переключаемся на игровой экран
+  // переход на экран игры
   scr('S-game');
 
-  // полный сброс
+  // сброс
   $('g-end').classList.remove('on');
   $('g-choices').classList.remove('on');
   $('g-char').classList.remove('vis','pl','pc','pr');
-  $('g-bg').classList.remove('vis');
-  $('g-bg').style.backgroundImage='none';
   $('g-name').textContent='';
-  $('g-txt').textContent='Загрузка…';
+  $('g-txt').textContent='';
 
-  // запускаем первую сцену
-  setTimeout(()=>{
-    console.log('Loading scene:',D.start);
-    loadScene(D.start);
-  },200);
+  // СРАЗУ загружаем сцену без задержки
+  loadScene(D.start);
 }
 
 function loadScene(sid){
-  console.log('loadScene:',sid);
+  try{
+    dbg('loadScene: '+sid);
+    const sc=D.scenes.find(s=>s.id===sid);
 
-  const sc=D.scenes.find(s=>s.id===sid);
-  if(!sc){
-    console.error('Scene not found:',sid);
-    endGame();
-    return;
-  }
+    if(!sc){
+      dbg('ERROR: сцена не найдена: '+sid);
+      toast('Ошибка: сцена не найдена!',1);
+      endGame();
+      return;
+    }
 
-  // проверяем шаги
-  if(!sc.steps||!sc.steps.length){
-    console.error('Scene has no steps:',sc.name);
-    if(sc.next) loadScene(sc.next);
-    else endGame();
-    return;
-  }
+    if(!sc.steps||!sc.steps.length){
+      dbg('Сцена пуста, переход: '+sc.next);
+      if(sc.next)loadScene(sc.next);
+      else endGame();
+      return;
+    }
 
-  G.sid=sid;
-  G.step=0;
+    G.sid=sid;
+    G.step=0;
 
-  // фон
-  const bg=D.bgs.find(b=>b.id===sc.bgId);
-  const bgEl=$('g-bg');
-  bgEl.classList.remove('vis');
-
-  setTimeout(()=>{
+    // фон — СРАЗУ, без setTimeout
+    const bg=D.bgs.find(b=>b.id===sc.bgId);
+    const bgEl=$('g-bg');
     if(bg){
       bgEl.style.backgroundImage=`url('${bg.data}')`;
       bgEl.style.backgroundColor='transparent';
+      dbg('Фон: '+bg.name);
     }else{
       bgEl.style.backgroundImage='none';
-      bgEl.style.backgroundColor='#1a1a2e';
+      bgEl.style.backgroundColor='#1e1e3e';
+      dbg('Фон: по умолчанию');
     }
-    bgEl.classList.add('vis');
-    console.log('Background set:',bg?bg.name:'default');
-  },100);
 
-  setTimeout(()=>{
-    console.log('showStep for scene:',sc.name,'step:',G.step);
+    // первый шаг — СРАЗУ
     showStep();
-  },350);
+
+  }catch(e){
+    dbg('ERROR loadScene: '+e.message);
+    console.error(e);
+    toast('Ошибка загрузки сцены!',1);
+  }
 }
 
 function showStep(){
-  const sc=D.scenes.find(s=>s.id===G.sid);
-  if(!sc){console.error('No scene');endGame();return}
+  try{
+    const sc=D.scenes.find(s=>s.id===G.sid);
+    if(!sc){dbg('ERROR: нет сцены');endGame();return}
 
-  console.log('showStep:',G.step,'/',sc.steps.length);
+    if(G.step>=sc.steps.length){
+      dbg('Все шаги пройдены → next='+sc.next);
+      if(sc.next)loadScene(sc.next);else endGame();
+      return;
+    }
 
-  if(G.step>=sc.steps.length){
-    console.log('All steps done, next:',sc.next);
-    if(sc.next) loadScene(sc.next);
-    else endGame();
-    return;
-  }
+    const st=sc.steps[G.step];
+    dbg('Шаг '+(G.step+1)+'/'+sc.steps.length);
 
-  const st=sc.steps[G.step];
-  const cel=$('g-char');
-
-  // персонаж
-  if(st.chId){
-    const ch=D.chars.find(c=>c.id===st.chId);
-    if(ch){
-      cel.src=ch.data;
-      cel.classList.remove('pl','pc','pr');
-      const p=st.pos||'center';
-      cel.classList.add(p==='left'?'pl':p==='right'?'pr':'pc');
-      cel.classList.add('vis');
-      $('g-name').textContent=ch.name;
-      console.log('Character:',ch.name,'pos:',p);
+    // персонаж
+    const cel=$('g-char');
+    if(st.chId){
+      const ch=D.chars.find(c=>c.id===st.chId);
+      if(ch){
+        cel.src=ch.data;
+        cel.classList.remove('pl','pc','pr');
+        const p=st.pos||'center';
+        cel.classList.add(p==='left'?'pl':p==='right'?'pr':'pc');
+        cel.classList.add('vis');
+        $('g-name').textContent=ch.name;
+      }else{
+        cel.classList.remove('vis');
+        $('g-name').textContent='';
+      }
     }else{
       cel.classList.remove('vis');
       $('g-name').textContent='';
     }
-  }else{
-    cel.classList.remove('vis');
-    $('g-name').textContent='';
+
+    // текст
+    const txt=st.text||'(пустой шаг)';
+    typeText(txt);
+
+    // индикатор
+    $('g-ind').style.display=(st.hasCh&&st.choices&&st.choices.length)?'none':'block';
+
+  }catch(e){
+    dbg('ERROR showStep: '+e.message);
+    console.error(e);
   }
-
-  // текст
-  const txt=st.text||'…';
-  console.log('Text:',txt.substring(0,50)+'...');
-  typeText(txt);
-
-  // индикатор
-  $('g-ind').style.display=(st.hasCh&&st.choices&&st.choices.length)?'none':'block';
 }
 
 function typeText(text){
@@ -771,7 +850,6 @@ function afterType(){
   const sc=D.scenes.find(s=>s.id===G.sid);if(!sc)return;
   const st=sc.steps[G.step];
   if(st&&st.hasCh&&st.choices&&st.choices.length){
-    console.log('Showing choices:',st.choices.length);
     showChoicesUI(st.choices);
   }
 }
@@ -785,9 +863,8 @@ function advance(){
   }
   const sc=D.scenes.find(s=>s.id===G.sid);if(!sc)return;
   const st=sc.steps[G.step];
-  if(st&&st.hasCh&&st.choices&&st.choices.length)return; // ждём выбор
+  if(st&&st.hasCh&&st.choices&&st.choices.length)return;
   G.step++;
-  console.log('Advance to step:',G.step);
   if(G.step>=sc.steps.length){
     if(sc.next)loadScene(sc.next);else endGame();
   }else showStep();
@@ -806,13 +883,12 @@ function pick(i){
   const st=sc.steps[G.step];if(!st||!st.choices||!st.choices[i])return;
   $('g-choices').classList.remove('on');
   const t=st.choices[i].target;
-  console.log('Choice picked:',i,'→ scene:',t);
   if(t)loadScene(t);else endGame();
 }
 
 function endGame(){
-  console.log('=== END GAME ===');
   stopTyping();
+  dbg('КОНЕЦ ИГРЫ');
   $('g-end').classList.add('on');
 }
 
