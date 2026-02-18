@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Visual Novel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0b1a;--card:#161630;--inp:#101028;
+  --acc:#e94560;--acc2:#ff6b81;--txt:#eaeaea;--sub:#7878a0;
+  --brd:#2a2a50;--ok:#4ecca3;--bad:#e94560
+}
+html,body{width:100%;height:100%;overflow:hidden;
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--txt);user-select:none;touch-action:manipulation}
+
+#rotate{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;
+  flex-direction:column;align-items:center;justify-content:center;gap:20px}
+#rotate .ri{font-size:56px;animation:rr 2s ease-in-out infinite}
+@keyframes rr{0%,100%{transform:rotate(0)}50%{transform:rotate(90deg)}}
+#rotate p{font-size:17px;color:var(--sub)}
+@media(orientation:portrait)and(max-width:900px){
+  #rotate{display:flex}#app{display:none!important}}
+
+#loader{position:fixed;inset:0;background:var(--bg);z-index:9998;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .5s}
+.spinner{width:42px;height:42px;border:3px solid var(--brd);border-top-color:var(--acc);
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loader.hide{opacity:0;pointer-events:none}
+
+#app{width:100vw;height:100vh;position:relative}
+.scr{display:none;position:absolute;inset:0}.scr.on{display:flex}
+
+#S-menu{flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0b0b1a 0%,#161630 40%,#1a1040 100%);gap:36px}
+#m-title{font-size:clamp(26px,5vw,58px);font-weight:900;letter-spacing:3px;text-align:center;
+  text-transform:uppercase;padding:0 20px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2),var(--acc));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:glo 3s ease-in-out infinite}
+@keyframes glo{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
+#no-novel{color:var(--sub);font-size:14px;display:none;text-align:center}
+.bplay{padding:16px 64px;font-size:20px;font-weight:700;background:var(--acc);color:#fff;
+  border:none;border-radius:50px;cursor:pointer;transition:.3s;letter-spacing:2px;text-transform:uppercase}
+.bplay:hover{background:var(--acc2);transform:scale(1.05);box-shadow:0 0 40px rgba(233,69,96,.4)}
+.bgear{position:absolute;top:14px;right:14px;width:44px;height:44px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;
+  color:var(--sub);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.3s}
+.bgear:hover{background:rgba(255,255,255,.15);color:var(--txt)}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;
+  align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.modal.on{display:flex}
+.mbox{background:var(--card);border:1px solid var(--brd);border-radius:16px;
+  padding:28px;min-width:300px;max-width:92vw;max-height:90vh;overflow-y:auto}
+.mbox h2{margin-bottom:18px;font-size:19px;display:flex;align-items:center;justify-content:space-between}
+.mx{background:0;border:0;color:var(--sub);font-size:22px;cursor:pointer;padding:4px}
+.mx:hover{color:var(--txt)}
+.mlg{width:90vw;max-width:820px}
+
+.fg{margin-bottom:15px}
+.fg label{display:block;font-size:11px;color:var(--sub);margin-bottom:5px;
+  font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+.fg input,.fg textarea,.fg select{width:100%;padding:10px 13px;background:var(--inp);
+  border:1px solid var(--brd);border-radius:8px;color:var(--txt);font-size:14px;outline:0;font-family:inherit}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--acc)}
+.fg textarea{min-height:60px;resize:vertical}
+.fg select{cursor:pointer}
+.ipv{width:100%;max-height:130px;object-fit:contain;border-radius:8px;margin-top:8px;background:var(--inp)}
+.fbtn{display:inline-block;padding:8px 20px;background:rgba(255,255,255,.08);
+  border:1px solid var(--brd);border-radius:8px;color:var(--txt);font-size:14px;cursor:pointer;transition:.3s}
+.fbtn:hover{background:rgba(255,255,255,.15)}
+
+.bp{padding:10px 24px;background:var(--acc);color:#fff;border:0;border-radius:8px;font-size:14px;cursor:pointer;transition:.3s}
+.bp:hover{background:var(--acc2)}
+.bs{padding:10px 24px;background:rgba(255,255,255,.08);color:var(--txt);
+  border:1px solid var(--brd);border-radius:8px;font-size:14px;cursor:pointer;transition:.3s}
+.bs:hover{background:rgba(255,255,255,.14)}
+.bd{padding:10px 24px;background:0;color:var(--bad);border:1px solid var(--bad);
+  border-radius:8px;font-size:14px;cursor:pointer;transition:.3s}
+.bd:hover{background:var(--bad);color:#fff}
+.brow{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.err-msg{color:var(--bad);font-size:13px;margin-top:-8px;margin-bottom:10px}
+
+#S-game{flex-direction:column;position:relative;
+  background:linear-gradient(160deg,#080816,#12102a,#0a0818)}
+#g-bg{position:absolute;inset:0;background-size:cover;background-position:center;
+  opacity:0;transition:opacity .7s;z-index:0}
+#g-bg.vis{opacity:1}
+#g-dim{position:absolute;inset:0;background:rgba(0,0,0,.12);z-index:1}
+#g-char{position:absolute;bottom:0;height:78%;max-width:42%;object-fit:contain;
+  z-index:2;pointer-events:none;opacity:0;transition:opacity .45s,left .4s,right .4s}
+#g-char.vis{opacity:1}
+#g-char.pl{left:3%}
+#g-char.pc{left:50%;transform:translateX(-50%)}
+#g-char.pr{right:3%;left:auto}
+
+#g-dlg{position:absolute;bottom:0;left:0;right:0;z-index:5;
+  background:linear-gradient(to bottom,transparent 0%,rgba(6,6,20,.93) 30%);
+  padding:34px 44px 24px;cursor:pointer;min-height:24%}
+#g-name{display:inline-block;padding:5px 18px;background:var(--acc);border-radius:8px 8px 0 0;
+  font-size:clamp(12px,1.6vw,17px);font-weight:700;color:#fff;margin-bottom:2px;position:relative;top:4px}
+#g-name:empty{display:none}
+#g-txt{font-size:clamp(13px,1.7vw,18px);line-height:1.65;white-space:pre-wrap;min-height:1.5em}
+#g-ind{position:absolute;bottom:12px;right:22px;font-size:12px;color:var(--sub);animation:bk 1.4s infinite}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.2}}
+
+#g-choices{position:absolute;inset:0;z-index:10;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px)}
+#g-choices.on{display:flex}
+.chb{padding:14px 44px;min-width:260px;max-width:80%;background:rgba(20,20,50,.92);
+  border:2px solid var(--acc);border-radius:12px;color:var(--txt);
+  font-size:clamp(13px,1.7vw,17px);cursor:pointer;transition:.3s;text-align:center}
+.chb:hover{background:var(--acc);transform:scale(1.03)}
+
+.bbk{position:absolute;top:10px;left:10px;z-index:20;padding:8px 18px;
+  background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.18);border-radius:8px;
+  color:var(--txt);font-size:13px;cursor:pointer;transition:.3s}
+.bbk:hover{background:rgba(0,0,0,.8)}
+
+#g-end{position:absolute;inset:0;z-index:15;display:none;flex-direction:column;
+  align-items:center;justify-content:center;background:rgba(0,0,0,.88);gap:30px}
+#g-end.on{display:flex}
+#g-end h2{font-size:clamp(28px,4vw,48px);
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+#S-dev{flex-direction:column;background:var(--bg)}
+.dh{display:flex;align-items:center;padding:10px 18px;background:var(--card);
+  border-bottom:1px solid var(--brd);gap:14px;flex-shrink:0}
+.dh h1{font-size:17px;flex:1}
+.dtabs{display:flex;background:var(--card);border-bottom:1px solid var(--brd);flex-shrink:0;overflow-x:auto}
+.dt{padding:11px 20px;font-size:13px;color:var(--sub);cursor:pointer;
+  border-bottom:2px solid transparent;transition:.3s;white-space:nowrap}
+.dt:hover{color:var(--txt);background:rgba(255,255,255,.04)}
+.dt.on{color:var(--acc);border-bottom-color:var(--acc)}
+.dc{flex:1;overflow-y:auto;padding:20px}
+
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:15px}
+.dcard{background:var(--card);border:1px solid var(--brd);border-radius:12px;overflow:hidden;
+  cursor:pointer;transition:.3s}
+.dcard:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 4px 18px rgba(233,69,96,.18)}
+.dcimg{width:100%;height:115px;background:var(--inp);background-size:cover;background-position:center}
+.dcinf{padding:11px}
+.dcn{font-size:14px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dcs{font-size:12px;color:var(--sub)}
+.dcadd{display:flex;align-items:center;justify-content:center;min-height:165px;
+  border-style:dashed;flex-direction:column;gap:8px}
+.dcadd .ico{font-size:34px;color:var(--sub)}
+.dcadd span{font-size:13px;color:var(--sub)}
+.dcard.start{border-color:var(--ok)}
+.dcard.start .dcs{color:var(--ok)}
+
+.steps{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.si{background:var(--inp);border:1px solid var(--brd);border-radius:10px;padding:14px}
+.sih{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sin{font-size:12px;color:var(--acc);font-weight:700;text-transform:uppercase}
+.sia{display:flex;gap:5px}
+.sia button{width:27px;height:27px;background:rgba(255,255,255,.07);border:1px solid var(--brd);
+  border-radius:6px;color:var(--sub);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sia button:hover{background:rgba(255,255,255,.14);color:var(--txt)}
+.sf{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sf .fw{grid-column:1/-1}
+.sf label{font-size:11px;color:var(--sub);margin-bottom:4px;display:block}
+.sf input,.sf textarea,.sf select{width:100%;padding:8px 10px;background:var(--bg);
+  border:1px solid var(--brd);border-radius:6px;color:var(--txt);font-size:13px;outline:0;font-family:inherit}
+.sf textarea{min-height:48px;resize:vertical}
+.csec{margin-top:10px;padding-top:10px;border-top:1px solid var(--brd)}
+.crow{display:flex;gap:7px;margin-bottom:8px;align-items:center}
+.crow input{flex:1}
+.crow select{width:130px}
+.crow input,.crow select{padding:7px 9px;background:var(--bg);border:1px solid var(--brd);
+  border-radius:6px;color:var(--txt);font-size:12px;outline:0}
+.crow button{width:27px;height:27px;background:rgba(233,69,96,.15);border:1px solid var(--bad);
+  border-radius:6px;color:var(--bad);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0}
+.cbtog{display:flex;align-items:center;gap:8px;margin-top:10px}
+.cbtog input[type=checkbox]{width:17px;height:17px;accent-color:var(--acc)}
+.cbtog label{font-size:13px;color:var(--txt);margin:0;cursor:pointer}
+.bsm{padding:5px 13px;background:rgba(255,255,255,.07);border:1px solid var(--brd);
+  border-radius:6px;color:var(--sub);font-size:12px;cursor:pointer;margin-top:6px}
+.bsm:hover{background:rgba(255,255,255,.14);color:var(--txt)}
+.setsec{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:20px;margin-bottom:16px}
+.setsec h3{font-size:16px;margin-bottom:12px}
+
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);
+  padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;z-index:5000;
+  transition:transform .3s;pointer-events:none}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:0}
+::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}
+@media(max-height:500px){
+  #g-dlg{padding:18px 28px 16px;min-height:30%}
+  .bplay{padding:12px 40px;font-size:17px}
+}
+</style>
+</head>
+<body>
+
+<div id="rotate"><div class="ri">📱</div><p>Поверните устройство горизонтально</p></div>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <div style="color:var(--sub);font-size:15px">Загрузка…</div>
+</div>
+
+<div id="app">
+
+<div id="S-menu" class="scr on">
+  <button class="bgear" onclick="openCode()">🔧</button>
+  <h1 id="m-title">Я НЕ ПРИДУМАЛ</h1>
+  <p id="no-novel">Новелла ещё не создана</p>
+  <button class="bplay" onclick="startGame()">Играть</button>
+</div>
+
+<div id="S-game" class="scr">
+  <button class="bbk" onclick="toMenu()">← Меню</button>
+  <div id="g-bg"></div>
+  <div id="g-dim"></div>
+  <img id="g-char" src="" alt="">
+  <div id="g-dlg" onclick="advance()">
+    <div id="g-name"></div>
+    <div id="g-txt"></div>
+    <div id="g-ind">▼</div>
+  </div>
+  <div id="g-choices"></div>
+  <div id="g-end">
+    <h2>Конец</h2>
+    <button class="bplay" onclick="toMenu()" style="font-size:16px;padding:12px 44px">В меню</button>
+  </div>
+</div>
+
+<div id="S-dev" class="scr">
+  <div class="dh">
+    <button class="bs" onclick="toMenu()" style="padding:7px 14px;font-size:13px">← Назад</button>
+    <h1>Панель разработчика</h1>
+  </div>
+  <div class="dtabs">
+    <div class="dt on" onclick="dTab('bg',this)">🖼 Фоны</div>
+    <div class="dt" onclick="dTab('ch',this)">👤 Персонажи</div>
+    <div class="dt" onclick="dTab('sc',this)">📜 Сцены</div>
+    <div class="dt" onclick="dTab('set',this)">⚙ Настройки</div>
+  </div>
+  <div class="dc" id="dc"></div>
+</div>
+
+</div>
+
+<div class="modal" id="M-code"><div class="mbox">
+  <h2>Введите код доступа</h2>
+  <div class="fg"><input type="password" id="i-code" placeholder="Код…" maxlength="10"></div>
+  <div class="err-msg" id="code-err" style="display:none">Неверный код</div>
+  <div class="brow">
+    <button class="bp" onclick="checkCode()">Войти</button>
+    <button class="bs" onclick="hideM('M-code')">Отмена</button>
+  </div>
+</div></div>
+
+<div class="modal" id="M-bg"><div class="mbox mlg">
+  <h2><span id="bg-t">Добавить фон</span><button class="mx" onclick="hideM('M-bg')">✕</button></h2>
+  <div class="fg"><label>Название</label><input id="bg-name" placeholder="Лес, Школа…"></div>
+  <div class="fg"><label>Изображение</label>
+    <label class="fbtn">📁 Выбрать<input type="file" accept="image/*" id="bg-file" style="display:none"
+      onchange="pvF(this,'bg-pv',1920,1080,false,'_bgD')"></label>
+    <img id="bg-pv" class="ipv" style="display:none"></div>
+  <div class="brow">
+    <button class="bp" onclick="saveBg()">Сохранить</button>
+    <button class="bd" id="bg-del" style="display:none" onclick="delBg()">Удалить</button>
+  </div>
+</div></div>
+
+<div class="modal" id="M-ch"><div class="mbox mlg">
+  <h2><span id="ch-t">Добавить персонажа</span><button class="mx" onclick="hideM('M-ch')">✕</button></h2>
+  <div class="fg"><label>Имя</label><input id="ch-name" placeholder="Имя персонажа"></div>
+  <div class="fg"><label>Спрайт (PNG)</label>
+    <label class="fbtn">📁 Выбрать<input type="file" accept="image/*" id="ch-file" style="display:none"
+      onchange="pvF(this,'ch-pv',600,900,true,'_chD')"></label>
+    <img id="ch-pv" class="ipv" style="display:none"></div>
+  <div class="brow">
+    <button class="bp" onclick="saveCh()">Сохранить</button>
+    <button class="bd" id="ch-del" style="display:none" onclick="delCh()">Удалить</button>
+  </div>
+</div></div>
+
+<div class="modal" id="M-sc"><div class="mbox mlg" style="max-height:88vh">
+  <h2><span id="sc-t">Добавить сцену</span><button class="mx" onclick="hideM('M-sc')">✕</button></h2>
+  <div id="sc-ed"></div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+const CODE='050412';
+let D={title:'Я НЕ ПРИДУМАЛ',bgs:[],chars:[],scenes:[],start:null};
+let curTab='bg',editId=null,eScData=null;
+window._bgD=null;window._chD=null;
+let G={sid:null,step:0,typing:false,timer:null,full:''};
+
+async function api(method,body){
+  try{
+    const opt={method,headers:{'Content-Type':'application/json'}};
+    if(body)opt.body=JSON.stringify(body);
+    const r=await fetch('/api/data',opt);
+    if(!r.ok)throw new Error(r.status);
+    return await r.json();
+  }catch(e){console.error('API:',e);return null}
+}
+async function loadData(){
+  const d=await api('GET');
+  if(d){D=d;D.title=D.title||'Я НЕ ПРИДУМАЛ';D.bgs=D.bgs||[];D.chars=D.chars||[];D.scenes=D.scenes||[]}
+}
+async function save(){
+  const ok=await api('POST',D);
+  if(!ok)toast('Ошибка сохранения!',1);
+}
+
+function uid(){return'i'+Date.now()+'_'+Math.random().toString(36).substr(2,6)}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function $(id){return document.getElementById(id)}
+
+function scr(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));$(id).classList.add('on')}
+function showM(id){$(id).classList.add('on')}
+function hideM(id){$(id).classList.remove('on')}
+function toast(m,err){const t=$('toast');t.textContent=m;
+  t.style.background=err?'var(--bad)':'var(--ok)';t.style.color=err?'#fff':'#000';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
+function updateMenu(){
+  $('m-title').textContent=D.title||'Я НЕ ПРИДУМАЛ';
+  $('no-novel').style.display=(D.start&&D.scenes.find(s=>s.id===D.start))?'none':'block';
+}
+
+function openCode(){$('i-code').value='';$('code-err').style.display='none';showM('M-code');$('i-code').focus()}
+$('i-code').addEventListener('keydown',e=>{if(e.key==='Enter')checkCode()});
+async function checkCode(){
+  if($('i-code').value!==CODE){$('code-err').style.display='block';return}
+  hideM('M-code');await loadData();updateMenu();scr('S-dev');renderTab()
+}
+function toMenu(){stopTyping();scr('S-menu');updateMenu()}
+
+function readFile(f){return new Promise(r=>{const x=new FileReader;x.onload=e=>r(e.target.result);x.readAsDataURL(f)})}
+function resize(url,mw,mh,png){return new Promise(r=>{const i=new Image;i.onload=()=>{
+  let w=i.width,h=i.height;if(w>mw||h>mh){const k=Math.min(mw/w,mh/h);w=Math.round(w*k);h=Math.round(h*k)}
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  c.getContext('2d').drawImage(i,0,0,w,h);
+  r(png?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.72))};i.src=url})}
+async function pvF(inp,pvId,mw,mh,png,varName){
+  if(!inp.files[0])return;const raw=await readFile(inp.files[0]);
+  const data=await resize(raw,mw,mh,png);window[varName]=data;
+  const p=$(pvId);p.src=data;p.style.display='block'}
+
+function dTab(t,el){curTab=t;document.querySelectorAll('.dt').forEach(x=>x.classList.remove('on'));
+  if(el)el.classList.add('on');renderTab()}
+function renderTab(){const c=$('dc');
+  if(curTab==='bg')rBgs(c);else if(curTab==='ch')rChars(c);
+  else if(curTab==='sc')rScenes(c);else rSettings(c)}
+
+function rBgs(c){let h='<div class="dgrid">';
+  D.bgs.forEach(b=>{h+=`<div class="dcard" onclick="eBg('${b.id}')">
+    <div class="dcimg" style="background-image:url('${b.data}')"></div>
+    <div class="dcinf"><div class="dcn">${esc(b.name)}</div><div class="dcs">Фон</div></div></div>`});
+  h+=`<div class="dcard dcadd" onclick="aBg()"><div class="ico">+</div><span>Добавить фон</span></div></div>`;
+  c.innerHTML=h}
+function aBg(){editId=null;_bgD=null;$('bg-t').textContent='Добавить фон';
+  $('bg-name').value='';$('bg-file').value='';$('bg-pv').style.display='none';
+  $('bg-del').style.display='none';showM('M-bg')}
+function eBg(id){const b=D.bgs.find(x=>x.id===id);if(!b)return;
+  editId=id;_bgD=null;$('bg-t').textContent='Редактировать фон';
+  $('bg-name').value=b.name;$('bg-file').value='';
+  $('bg-pv').src=b.data;$('bg-pv').style.display='block';
+  $('bg-del').style.display='inline-block';showM('M-bg')}
+async function saveBg(){const n=$('bg-name').value.trim();
+  if(!n){toast('Введите название',1);return}
+  if(editId){const b=D.bgs.find(x=>x.id===editId);if(b){b.name=n;if(_bgD)b.data=_bgD}}
+  else{if(!_bgD){toast('Выберите изображение',1);return}D.bgs.push({id:uid(),name:n,data:_bgD})}
+  _bgD=null;await save();hideM('M-bg');renderTab();toast('Фон сохранён')}
+async function delBg(){if(!confirm('Удалить?'))return;
+  D.bgs=D.bgs.filter(x=>x.id!==editId);await save();hideM('M-bg');renderTab();toast('Удалено')}
+
+function rChars(c){let h='<div class="dgrid">';
+  D.chars.forEach(ch=>{h+=`<div class="dcard" onclick="eCh('${ch.id}')">
+    <div class="dcimg" style="background-image:url('${ch.data}');background-size:contain;background-repeat:no-repeat;background-position:center"></div>
+    <div class="dcinf"><div class="dcn">${esc(ch.name)}</div><div class="dcs">Персонаж</div></div></div>`});
+  h+=`<div class="dcard dcadd" onclick="aCh()"><div class="ico">+</div><span>Добавить</span></div></div>`;
+  c.innerHTML=h}
+function aCh(){editId=null;_chD=null;$('ch-t').textContent='Добавить персонажа';
+  $('ch-name').value='';$('ch-file').value='';$('ch-pv').style.display='none';
+  $('ch-del').style.display='none';showM('M-ch')}
+function eCh(id){const ch=D.chars.find(x=>x.id===id);if(!ch)return;
+  editId=id;_chD=null;$('ch-t').textContent='Редактировать';
+  $('ch-name').value=ch.name;$('ch-file').value='';
+  $('ch-pv').src=ch.data;$('ch-pv').style.display='block';
+  $('ch-del').style.display='inline-block';showM('M-ch')}
+async function saveCh(){const n=$('ch-name').value.trim();
+  if(!n){toast('Введите имя',1);return}
+  if(editId){const ch=D.chars.find(x=>x.id===editId);if(ch){ch.name=n;if(_chD)ch.data=_chD}}
+  else{if(!_chD){toast('Выберите изображение',1);return}D.chars.push({id:uid(),name:n,data:_chD})}
+  _chD=null;await save();hideM('M-ch');renderTab();toast('Сохранено')}
+async function delCh(){if(!confirm('Удалить?'))return;
+  D.chars=D.chars.filter(x=>x.id!==editId);await save();hideM('M-ch');renderTab();toast('Удалено')}
+
+function rScenes(c){let h='<div class="dgrid">';
+  D.scenes.forEach(sc=>{const isS=sc.id===D.start;const bg=D.bgs.find(b=>b.id===sc.bgId);
+    h+=`<div class="dcard${isS?' start':''}" onclick="eSc('${sc.id}')">
+      <div class="dcimg" style="${bg?`background-image:url('${bg.data}')`:'display:flex;align-items:center;justify-content:center;font-size:38px;color:var(--sub)'}">
+        ${bg?'':'📜'}</div>
+      <div class="dcinf"><div class="dcn">${esc(sc.name||'Без названия')}</div>
+      <div class="dcs">${isS?'⭐ Начальная':sc.steps.length+' шаг(ов)'}</div></div></div>`});
+  h+=`<div class="dcard dcadd" onclick="aSc()"><div class="ico">+</div><span>Добавить сцену</span></div></div>`;
+  c.innerHTML=h}
+
+function mkStep(){return{chId:null,pos:'center',text:'',hasCh:false,choices:[]}}
+function aSc(){editId=null;eScData={id:uid(),name:'',bgId:null,steps:[mkStep()],next:null};
+  $('sc-t').textContent='Добавить сцену';rScEd();showM('M-sc')}
+function eSc(id){const sc=D.scenes.find(s=>s.id===id);if(!sc)return;
+  editId=id;eScData=JSON.parse(JSON.stringify(sc));
+  eScData.steps.forEach(s=>{if(s.hasCh===undefined)s.hasCh=!!(s.choices&&s.choices.length)});
+  $('sc-t').textContent='Редактировать';rScEd();showM('M-sc')}
+
+function gather(){const ed=$('sc-ed');if(!ed)return;
+  const v=x=>ed.querySelector(x);
+  const ni=v('#sce-name');if(ni)eScData.name=ni.value;
+  const bi=v('#sce-bg');if(bi)eScData.bgId=bi.value||null;
+  const nsi=v('#sce-next');if(nsi)eScData.next=nsi.value||null;
+  ed.querySelectorAll('.si').forEach((el,i)=>{const s=eScData.steps[i];if(!s)return;
+    const gv=x=>el.querySelector(x);
+    const ch=gv('.sc-ch');if(ch)s.chId=ch.value||null;
+    const ps=gv('.sc-ps');if(ps)s.pos=ps.value;
+    const tx=gv('.sc-tx');if(tx)s.text=tx.value;
+    el.querySelectorAll('.crow').forEach((cr,ci)=>{if(!s.choices[ci])return;
+      const ct=cr.querySelector('.sc-ct');if(ct)s.choices[ci].text=ct.value;
+      const cs=cr.querySelector('.sc-cs');if(cs)s.choices[ci].target=cs.value||null})})}
+
+function rScEd(){const sc=eScData;
+  const bgO=D.bgs.map(b=>`<option value="${b.id}"${sc.bgId===b.id?' selected':''}>${esc(b.name)}</option>`).join('');
+  const allSc=D.scenes.filter(s=>s.id!==sc.id);
+  let stH='';
+  sc.steps.forEach((st,i)=>{
+    const chO=D.chars.map(c=>`<option value="${c.id}"${st.chId===c.id?' selected':''}>${esc(c.name)}</option>`).join('');
+    let chcH='';
+    if(st.hasCh){
+      chcH='<div class="csec"><label style="font-size:11px;color:var(--sub)">Варианты:</label>';
+      (st.choices||[]).forEach((ch,ci)=>{
+        const csO=allSc.map(s=>`<option value="${s.id}"${ch.target===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
+        chcH+=`<div class="crow"><input class="sc-ct" value="${esc(ch.text)}" placeholder="Текст">
+          <select class="sc-cs"><option value="">→ Сцена…</option>${csO}</select>
+          <button onclick="gather();eScData.steps[${i}].choices.splice(${ci},1);rScEd()">✕</button></div>`});
+      chcH+=`<button class="bsm" onclick="gather();eScData.steps[${i}].choices.push({text:'',target:null});rScEd()">+ Вариант</button></div>`}
+    stH+=`<div class="si"><div class="sih"><span class="sin">Шаг ${i+1}</span><div class="sia">
+      ${i>0?`<button onclick="gather();swSt(${i},-1)">↑</button>`:''}
+      ${i<sc.steps.length-1?`<button onclick="gather();swSt(${i},1)">↓</button>`:''}
+      ${sc.steps.length>1?`<button onclick="gather();eScData.steps.splice(${i},1);rScEd()">✕</button>`:''}
+    </div></div>
+    <div class="sf">
+      <div><label>Персонаж</label><select class="sc-ch"><option value="">— Рассказчик —</option>${chO}</select></div>
+      <div><label>Позиция</label><select class="sc-ps">
+        <option value="left"${st.pos==='left'?' selected':''}>Слева</option>
+        <option value="center"${st.pos==='center'?' selected':''}>По центру</option>
+        <option value="right"${st.pos==='right'?' selected':''}>Справа</option></select></div>
+      <div class="fw"><label>Текст</label><textarea class="sc-tx" placeholder="Диалог…">${esc(st.text)}</textarea></div>
+    </div>
+    <div class="cbtog">
+      <input type="checkbox" id="cb${i}"${st.hasCh?' checked':''}
+        onchange="gather();eScData.steps[${i}].hasCh=this.checked;if(this.checked&&(!eScData.steps[${i}].choices||!eScData.steps[${i}].choices.length))eScData.steps[${i}].choices=[{text:'',target:null}];rScEd()">
+      <label for="cb${i}">Варианты выбора</label>
+    </div>${chcH}</div>`});
+
+  const nxO=allSc.map(s=>`<option value="${s.id}"${sc.next===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
+  $('sc-ed').innerHTML=`
+    <div class="fg"><label>Название</label><input id="sce-name" value="${esc(sc.name)}" placeholder="Название…"></div>
+    <div class="fg"><label>Фон</label><select id="sce-bg"><option value="">— Без фона —</option>${bgO}</select></div>
+    <div class="fg"><label>Шаги</label><div class="steps">${stH}</div>
+      <button class="bsm" onclick="gather();eScData.steps.push(mkStep());rScEd()" style="margin-top:12px">+ Шаг</button></div>
+    <div class="fg"><label>Следующая сцена</label>
+      <select id="sce-next"><option value="">— Конец —</option>${nxO}</select></div>
+    <div class="brow" style="margin-top:18px">
+      <button class="bp" onclick="saveSc()">Сохранить</button>
+      ${editId?'<button class="bd" onclick="delSc()">Удалить</button>':''}</div>`}
+
+function swSt(i,d){const s=eScData.steps;[s[i],s[i+d]]=[s[i+d],s[i]];rScEd()}
+async function saveSc(){gather();const sc=eScData;sc.name=sc.name||'Без названия';
+  sc.steps.forEach(s=>{if(!s.hasCh)s.choices=[]});
+  if(editId){const idx=D.scenes.findIndex(s=>s.id===editId);if(idx>=0)D.scenes[idx]=sc}
+  else{D.scenes.push(sc);if(!D.start)D.start=sc.id}
+  await save();hideM('M-sc');renderTab();toast('Сцена сохранена')}
+async function delSc(){if(!confirm('Удалить?'))return;
+  D.scenes=D.scenes.filter(s=>s.id!==editId);
+  if(D.start===editId)D.start=D.scenes.length?D.scenes[0].id:null;
+  await save();hideM('M-sc');renderTab();toast('Удалено')}
+
+function rSettings(c){
+  const scO=D.scenes.map(s=>`<option value="${s.id}"${D.start===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
+  c.innerHTML=`
+    <div class="setsec"><h3>✏️ Название</h3><div class="fg">
+      <input value="${esc(D.title)}" onchange="D.title=this.value;save();updateMenu();toast('Обновлено')"></div></div>
+    <div class="setsec"><h3>⭐ Начальная сцена</h3><div class="fg">
+      <select onchange="D.start=this.value||null;save();toast('Обновлено')">
+        <option value="">— Не выбрана —</option>${scO}</select></div></div>
+    <div class="setsec"><h3>💾 Экспорт / Импорт</h3><div class="brow">
+      <button class="bs" onclick="expD()">📤 Экспорт</button>
+      <label class="bs" style="cursor:pointer">📥 Импорт
+        <input type="file" accept=".json" style="display:none" onchange="impD(this)"></label></div></div>
+    <div class="setsec"><h3>🗑 Очистка</h3>
+      <p style="color:var(--sub);font-size:13px;margin-bottom:10px">Удалить все данные.</p>
+      <button class="bd" onclick="clearAll()">Удалить всё</button></div>
+    <div class="setsec"><h3>📊 Статистика</h3>
+      <p style="color:var(--sub);font-size:13px">Фонов: ${D.bgs.length} · Персонажей: ${D.chars.length} · Сцен: ${D.scenes.length}</p></div>`}
+function expD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='novel.json';a.click()}
+async function impD(inp){if(!inp.files[0])return;try{const t=await inp.files[0].text();const d=JSON.parse(t);
+  if(d.bgs&&d.scenes){D=d;await save();renderTab();updateMenu();toast('Импортировано')}
+  else toast('Неверный формат',1)}catch(e){toast('Ошибка',1)}}
+async function clearAll(){if(!confirm('Удалить ВСЕ?'))return;
+  D={title:'Я НЕ ПРИДУМАЛ',bgs:[],chars:[],scenes:[],start:null};
+  await save();renderTab();updateMenu();toast('Очищено')}
+
+async function startGame(){
+  await loadData();updateMenu();
+  const sc=D.scenes.find(s=>s.id===D.start);
+  if(!D.start||!sc){toast('Новелла не создана',1);return}
+  scr('S-game');
+  $('g-end').classList.remove('on');$('g-choices').classList.remove('on');
+  $('g-char').classList.remove('vis');$('g-bg').classList.remove('vis');
+  $('g-name').textContent='';$('g-txt').textContent='';
+  setTimeout(()=>loadScene(D.start),100)}
+
+function loadScene(sid){const sc=D.scenes.find(s=>s.id===sid);
+  if(!sc){endGame();return}G.sid=sid;G.step=0;
+  const bg=D.bgs.find(b=>b.id===sc.bgId);const el=$('g-bg');
+  el.classList.remove('vis');
+  setTimeout(()=>{el.style.backgroundImage=bg?`url('${bg.data}')`:'none';el.classList.add('vis')},100);
+  setTimeout(()=>showStep(),300)}
+
+function showStep(){const sc=D.scenes.find(s=>s.id===G.sid);
+  if(!sc||G.step>=sc.steps.length){if(sc&&sc.next)loadScene(sc.next);else endGame();return}
+  const st=sc.steps[G.step];const cel=$('g-char');
+  if(st.chId){const ch=D.chars.find(c=>c.id===st.chId);
+    if(ch){cel.src=ch.data;cel.classList.remove('pl','pc','pr');
+      const p=st.pos||'center';cel.classList.add(p==='left'?'pl':p==='right'?'pr':'pc');
+      cel.classList.add('vis');$('g-name').textContent=ch.name}
+    else{cel.classList.remove('vis');$('g-name').textContent=''}}
+  else{cel.classList.remove('vis');$('g-name').textContent=''}
+  typeText(st.text||'…');
+  $('g-ind').style.display=(st.hasCh&&st.choices&&st.choices.length)?'none':'block'}
+
+function typeText(text){stopTyping();G.full=text;G.typing=true;
+  const el=$('g-txt');let i=0;el.textContent='';
+  G.timer=setInterval(()=>{if(i<text.length){el.textContent+=text[i];i++}
+    else{stopTyping();afterType()}},28)}
+function stopTyping(){if(G.timer){clearInterval(G.timer);G.timer=null}G.typing=false}
+function afterType(){const sc=D.scenes.find(s=>s.id===G.sid);if(!sc)return;
+  const st=sc.steps[G.step];
+  if(st&&st.hasCh&&st.choices&&st.choices.length)showChoicesUI(st.choices)}
+function advance(){if(G.typing){stopTyping();$('g-txt').textContent=G.full;afterType();return}
+  const sc=D.scenes.find(s=>s.id===G.sid);if(!sc)return;const st=sc.steps[G.step];
+  if(st&&st.hasCh&&st.choices&&st.choices.length)return;
+  G.step++;if(G.step>=sc.steps.length){if(sc.next)loadScene(sc.next);else endGame()}else showStep()}
+function showChoicesUI(choices){const c=$('g-choices');
+  c.innerHTML=choices.map((ch,i)=>
+    `<button class="chb" onclick="pick(${i})">${esc(ch.text||'Вариант '+(i+1))}</button>`).join('');
+  c.classList.add('on')}
+function pick(i){const sc=D.scenes.find(s=>s.id===G.sid);if(!sc)return;
+  const st=sc.steps[G.step];if(!st||!st.choices||!st.choices[i])return;
+  $('g-choices').classList.remove('on');const t=st.choices[i].target;
+  if(t)loadScene(t);else endGame()}
+function endGame(){stopTyping();$('g-end').classList.add('on')}
+
+(async()=>{
+  if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand()}
+  await loadData();updateMenu();
+  $('loader').classList.add('hide');setTimeout(()=>$('loader').style.display='none',600)
+})();
+</script>
+</body>
+</html>
