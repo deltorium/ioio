@@ -16,7 +16,6 @@ html,body{width:100%;height:100%;overflow:hidden;
   font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
   background:var(--bg);color:var(--txt);user-select:none;touch-action:manipulation}
 
-/* ═══ ROTATE ═══ */
 #rotate{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;gap:20px}
 #rotate .ri{font-size:56px;animation:rr 2s ease-in-out infinite}
@@ -25,7 +24,6 @@ html,body{width:100%;height:100%;overflow:hidden;
 @media(orientation:portrait)and(max-width:900px){
   #rotate{display:flex}#app{display:none!important}}
 
-/* ═══ LOADER ═══ */
 #loader{position:fixed;inset:0;background:var(--bg);z-index:9998;
   display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .5s}
 .spinner{width:42px;height:42px;border:3px solid var(--brd);border-top-color:var(--acc);
@@ -33,7 +31,6 @@ html,body{width:100%;height:100%;overflow:hidden;
 @keyframes spin{to{transform:rotate(360deg)}}
 #loader.hide{opacity:0;pointer-events:none}
 
-/* ═══ SCREENS ═══ */
 #app{width:100vw;height:100vh;position:relative}
 .scr{display:none;position:absolute;inset:0}.scr.on{display:flex}
 
@@ -91,118 +88,134 @@ html,body{width:100%;height:100%;overflow:hidden;
 .brow{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
 .err-msg{color:var(--bad);font-size:13px;margin-top:-8px;margin-bottom:10px}
 
-/* ═══════════════════════════════════════════
-   GAME SCREEN — all fixed
-   ═══════════════════════════════════════════ */
+/* ═══════════════════════════════
+   GAME SCREEN
+   ═══════════════════════════════ */
 #S-game{
-  flex-direction:column;
   position:relative;
-  /* visible gradient instead of pure black */
-  background:linear-gradient(135deg,#0d0d2b 0%,#1a1040 50%,#0d0d2b 100%);
+  /* не flex! просто block чтобы absolute дети работали */
+  display:none;
+}
+#S-game.on{
+  display:block !important;
 }
 
-/* background image layer */
+/* фон — заполняет весь экран */
 #g-bg{
-  position:absolute;inset:0;z-index:0;
+  position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  z-index:1;
+  background-color:#1a1a3e;
   background-size:cover;
   background-position:center;
-  background-color:#1a1a2e;
-  transition:background-image .5s ease;
 }
 
-/* slight dim over background */
-#g-dim{position:absolute;inset:0;background:rgba(0,0,0,.08);z-index:1;pointer-events:none}
-
-/* character sprite */
+/* персонаж */
 #g-char{
-  position:absolute;bottom:0;z-index:2;
-  height:78%;max-width:42%;object-fit:contain;
+  position:absolute;
+  bottom:0;
+  z-index:2;
+  height:75%;
+  max-width:40%;
+  object-fit:contain;
   pointer-events:none;
-  opacity:0;transition:opacity .4s;
+  display:none;
 }
-#g-char.vis{opacity:1}
+#g-char.vis{display:block}
 #g-char.pl{left:3%}
 #g-char.pc{left:50%;transform:translateX(-50%)}
 #g-char.pr{right:3%;left:auto}
 
-/* ─── DIALOGUE BOX: solid visible background ─── */
+/* ─── DIALOGUE BOX ─── */
 #g-dlg{
   position:absolute;
-  bottom:0;left:0;right:0;
-  z-index:5;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:10;
+  /* SOLID background — невозможно не заметить */
+  background-color:#0a0a24;
+  border-top:3px solid #e94560;
+  min-height:140px;
+  padding:20px 30px 18px;
   cursor:pointer;
-  /* solid dark background — always visible */
-  background:rgba(8,8,30,.95);
-  border-top:2px solid rgba(233,69,96,.3);
-  min-height:25vh;
-  padding:20px 40px 20px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
 }
 
-#g-name-wrap{margin-bottom:8px}
 #g-name{
   display:inline-block;
-  padding:5px 18px;
-  background:var(--acc);
-  border-radius:8px;
-  font-size:clamp(13px,1.6vw,17px);
+  padding:4px 16px;
+  background:#e94560;
+  border-radius:6px;
+  font-size:16px;
   font-weight:700;
-  color:#fff;
+  color:#ffffff;
+  margin-bottom:8px;
 }
 #g-name:empty{display:none}
 
 #g-txt{
-  font-size:clamp(15px,1.8vw,20px);
+  font-size:17px;
   line-height:1.7;
-  white-space:pre-wrap;
-  min-height:2em;
   color:#ffffff;
+  white-space:pre-wrap;
+  min-height:40px;
 }
 
 #g-ind{
   position:absolute;
-  bottom:14px;right:24px;
-  font-size:14px;
+  bottom:10px;
+  right:20px;
   color:rgba(255,255,255,.4);
+  font-size:14px;
   animation:bk 1.4s infinite;
 }
 @keyframes bk{0%,100%{opacity:1}50%{opacity:.2}}
 
-/* choices overlay */
+/* выборы */
 #g-choices{
-  position:absolute;inset:0;z-index:10;
-  display:none;flex-direction:column;
-  align-items:center;justify-content:center;gap:12px;
-  background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  z-index:20;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  background:rgba(0,0,0,.6);
 }
 #g-choices.on{display:flex}
-.chb{padding:14px 44px;min-width:260px;max-width:80%;
+.chb{
+  padding:14px 44px;min-width:260px;max-width:80%;
   background:rgba(20,20,50,.95);border:2px solid var(--acc);border-radius:12px;
-  color:#fff;font-size:clamp(13px,1.7vw,17px);cursor:pointer;transition:.3s;text-align:center}
+  color:#fff;font-size:16px;cursor:pointer;transition:.3s;text-align:center;
+}
 .chb:hover{background:var(--acc);transform:scale(1.03)}
 
-/* back button */
-.bbk{position:absolute;top:10px;left:10px;z-index:20;padding:8px 18px;
-  background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);border-radius:8px;
-  color:#fff;font-size:13px;cursor:pointer;transition:.3s}
-.bbk:hover{background:rgba(0,0,0,.85)}
+/* кнопка назад */
+.bbk{
+  position:absolute;top:10px;left:10px;z-index:30;padding:8px 18px;
+  background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.3);border-radius:8px;
+  color:#fff;font-size:13px;cursor:pointer;
+}
+.bbk:hover{background:rgba(0,0,0,.9)}
 
-/* end screen */
-#g-end{position:absolute;inset:0;z-index:15;display:none;flex-direction:column;
-  align-items:center;justify-content:center;background:rgba(0,0,0,.88);gap:30px}
+/* конец */
+#g-end{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  z-index:25;display:none;flex-direction:column;
+  align-items:center;justify-content:center;background:rgba(0,0,0,.88);gap:30px;
+}
 #g-end.on{display:flex}
-#g-end h2{font-size:clamp(28px,4vw,48px);
-  background:linear-gradient(135deg,var(--acc),var(--acc2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#g-end h2{font-size:clamp(28px,4vw,48px);color:var(--acc)}
 
-/* debug overlay */
+/* отладка */
 #g-debug{
-  position:absolute;top:10px;right:10px;z-index:20;
-  background:rgba(0,0,0,.7);color:#0f0;font-size:11px;
-  padding:6px 10px;border-radius:6px;font-family:monospace;
-  display:none;max-width:300px;word-break:break-all;
+  position:absolute;top:10px;right:60px;z-index:30;
+  background:rgba(0,0,0,.85);color:#00ff00;font-size:12px;
+  padding:8px 14px;border-radius:8px;font-family:monospace;
+  max-width:400px;word-break:break-all;
+  border:1px solid #00ff00;
+  white-space:pre-wrap;
 }
 
 /* ═══ DEV PANEL ═══ */
@@ -270,10 +283,6 @@ html,body{width:100%;height:100%;overflow:hidden;
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:0}
 ::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}
-@media(max-height:500px){
-  #g-dlg{min-height:30vh;padding:14px 24px 14px}
-  .bplay{padding:12px 40px;font-size:17px}
-}
 </style>
 </head>
 <body>
@@ -287,7 +296,6 @@ html,body{width:100%;height:100%;overflow:hidden;
 
 <div id="app">
 
-<!-- ══ MENU ══ -->
 <div id="S-menu" class="scr on">
   <button class="bgear" onclick="openCode()">🔧</button>
   <h1 id="m-title">Я НЕ ПРИДУМАЛ</h1>
@@ -295,16 +303,12 @@ html,body{width:100%;height:100%;overflow:hidden;
   <button class="bplay" id="btn-play" onclick="startGame()">Играть</button>
 </div>
 
-<!-- ══ GAME ══ -->
 <div id="S-game" class="scr">
-  <button class="bbk" onclick="toMenu()">← Меню</button>
   <div id="g-bg"></div>
-  <div id="g-dim"></div>
   <img id="g-char" src="" alt="">
-  <div id="g-debug"></div>
   <div id="g-dlg" onclick="advance()">
-    <div id="g-name-wrap"><span id="g-name"></span></div>
-    <div id="g-txt"></div>
+    <div id="g-name"></div>
+    <div id="g-txt">Загрузка...</div>
     <div id="g-ind">▼</div>
   </div>
   <div id="g-choices"></div>
@@ -312,9 +316,10 @@ html,body{width:100%;height:100%;overflow:hidden;
     <h2>Конец</h2>
     <button class="bplay" onclick="toMenu()" style="font-size:16px;padding:12px 44px">В меню</button>
   </div>
+  <button class="bbk" onclick="toMenu()">← Меню</button>
+  <div id="g-debug"></div>
 </div>
 
-<!-- ══ DEV PANEL ══ -->
 <div id="S-dev" class="scr">
   <div class="dh">
     <button class="bs" onclick="toMenu()" style="padding:7px 14px;font-size:13px">← Назад</button>
@@ -331,7 +336,6 @@ html,body{width:100%;height:100%;overflow:hidden;
 
 </div>
 
-<!-- ══ MODALS ══ -->
 <div class="modal" id="M-code"><div class="mbox">
   <h2>Введите код доступа</h2>
   <div class="fg">
@@ -357,7 +361,7 @@ html,body{width:100%;height:100%;overflow:hidden;
       <input type="file" accept="image/*" id="bg-file" name="bg-file" style="display:none"
         onchange="pvF(this,'bg-pv',1920,1080,false,'_bgD')">
     </label>
-    <img id="bg-pv" class="ipv" style="display:none">
+    <img id="bg-pv" class="ipv" style="display:none" alt="preview">
   </div>
   <div class="brow">
     <button class="bp" onclick="saveBg()">Сохранить</button>
@@ -377,7 +381,7 @@ html,body{width:100%;height:100%;overflow:hidden;
       <input type="file" accept="image/*" id="ch-file" name="ch-file" style="display:none"
         onchange="pvF(this,'ch-pv',600,900,true,'_chD')">
     </label>
-    <img id="ch-pv" class="ipv" style="display:none">
+    <img id="ch-pv" class="ipv" style="display:none" alt="preview">
   </div>
   <div class="brow">
     <button class="bp" onclick="saveCh()">Сохранить</button>
@@ -394,22 +398,20 @@ html,body{width:100%;height:100%;overflow:hidden;
 
 <script>
 const CODE='050412';
-const DEBUG=true; // поставьте false чтобы скрыть отладку
-
 let D={title:'Я НЕ ПРИДУМАЛ',bgs:[],chars:[],scenes:[],start:null};
 let curTab='bg',editId=null,eScData=null;
 window._bgD=null;window._chD=null;
 let G={sid:null,step:0,typing:false,timer:null,full:''};
+let debugLog=[];
 
-/* ═══ DEBUG ═══ */
 function dbg(msg){
   console.log('[VN]',msg);
-  if(!DEBUG)return;
-  const el=$('g-debug');
-  if(el){el.style.display='block';el.textContent=msg}
+  debugLog.push(msg);
+  if(debugLog.length>8)debugLog.shift();
+  const el=document.getElementById('g-debug');
+  if(el)el.textContent=debugLog.join('\n');
 }
 
-/* ═══ API ═══ */
 async function api(method,body){
   try{
     const opt={method,headers:{'Content-Type':'application/json'}};
@@ -417,153 +419,98 @@ async function api(method,body){
     const r=await fetch('/api/data',opt);
     if(!r.ok)throw new Error('HTTP '+r.status);
     return await r.json();
-  }catch(e){console.error('API error:',e);return null}
+  }catch(e){console.error('API:',e);return null}
 }
-
 async function loadData(){
   const d=await api('GET');
-  if(d){
-    D=d;
-    D.title=D.title||'Я НЕ ПРИДУМАЛ';
-    D.bgs=D.bgs||[];
-    D.chars=D.chars||[];
-    D.scenes=D.scenes||[];
-    console.log('[VN] Loaded:',D.scenes.length,'scenes, start=',D.start);
-    return true;
-  }
-  console.error('[VN] Failed to load data');
+  if(d){D=d;D.title=D.title||'Я НЕ ПРИДУМАЛ';D.bgs=D.bgs||[];D.chars=D.chars||[];D.scenes=D.scenes||[];return true}
   return false;
 }
+async function save(){const ok=await api('POST',D);if(!ok)toast('Ошибка сохранения!',1);return!!ok}
 
-async function save(){
-  const ok=await api('POST',D);
-  if(!ok)toast('Ошибка сохранения!',1);
-  return !!ok;
-}
-
-/* ═══ UTILS ═══ */
 function uid(){return'i'+Date.now()+'_'+Math.random().toString(36).substr(2,6)}
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function $(id){return document.getElementById(id)}
 
-/* ═══ UI ═══ */
 function scr(id){
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
   $(id).classList.add('on');
+  dbg('screen: '+id);
 }
 function showM(id){$(id).classList.add('on')}
 function hideM(id){$(id).classList.remove('on')}
-
-function toast(m,err){
-  const t=$('toast');t.textContent=m;
-  t.style.background=err?'var(--bad)':'var(--ok)';
-  t.style.color=err?'#fff':'#000';
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),4000);
-}
-
+function toast(m,err){const t=$('toast');t.textContent=m;
+  t.style.background=err?'var(--bad)':'var(--ok)';t.style.color=err?'#fff':'#000';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000)}
 function updateMenu(){
   $('m-title').textContent=D.title||'Я НЕ ПРИДУМАЛ';
-  const startScene=D.start?D.scenes.find(s=>s.id===D.start):null;
-  const st=$('menu-status');
-  const btn=$('btn-play');
-
-  if(!D.scenes.length){
-    st.innerHTML='<div class="st-no">❌ Новелла пуста — нажмите 🔧 для создания</div>';
-    btn.disabled=true;
-  }else if(!D.start||!startScene){
-    st.innerHTML='<div class="st-no">⚠️ Не выбрана начальная сцена — 🔧 → Настройки</div>';
-    btn.disabled=true;
-  }else if(!startScene.steps||!startScene.steps.length){
-    st.innerHTML='<div class="st-no">⚠️ Начальная сцена пуста — добавьте шаги</div>';
-    btn.disabled=true;
-  }else{
-    st.innerHTML=`<div class="st-ok">✅ ${D.scenes.length} сцен(ы) · Начальная: ${esc(startScene.name)}</div>`;
-    btn.disabled=false;
-  }
+  const ss=D.start?D.scenes.find(s=>s.id===D.start):null;
+  const st=$('menu-status');const btn=$('btn-play');
+  if(!D.scenes.length){st.innerHTML='<div class="st-no">❌ Новелла пуста — нажмите 🔧</div>';btn.disabled=true}
+  else if(!D.start||!ss){st.innerHTML='<div class="st-no">⚠️ Нет начальной сцены — 🔧→Настройки</div>';btn.disabled=true}
+  else if(!ss.steps||!ss.steps.length){st.innerHTML='<div class="st-no">⚠️ Сцена пуста</div>';btn.disabled=true}
+  else{st.innerHTML=`<div class="st-ok">✅ ${D.scenes.length} сцен · «${esc(ss.name)}»</div>`;btn.disabled=false}
 }
 
-/* ═══ MENU ═══ */
-function openCode(){
-  $('i-code').value='';$('code-err').style.display='none';
-  showM('M-code');$('i-code').focus();
-}
+function openCode(){$('i-code').value='';$('code-err').style.display='none';showM('M-code');$('i-code').focus()}
 $('i-code').addEventListener('keydown',e=>{if(e.key==='Enter')checkCode()});
-
 async function checkCode(){
   if($('i-code').value!==CODE){$('code-err').style.display='block';return}
-  hideM('M-code');await loadData();updateMenu();scr('S-dev');renderTab();
-}
-
+  hideM('M-code');await loadData();updateMenu();scr('S-dev');renderTab()}
 function toMenu(){stopTyping();scr('S-menu');updateMenu()}
 
-/* ═══ IMAGE ═══ */
 function readFile(f){return new Promise(r=>{const x=new FileReader;x.onload=e=>r(e.target.result);x.readAsDataURL(f)})}
 function resize(url,mw,mh,png){return new Promise(r=>{const i=new Image;i.onload=()=>{
-  let w=i.width,h=i.height;
-  if(w>mw||h>mh){const k=Math.min(mw/w,mh/h);w=Math.round(w*k);h=Math.round(h*k)}
+  let w=i.width,h=i.height;if(w>mw||h>mh){const k=Math.min(mw/w,mh/h);w=Math.round(w*k);h=Math.round(h*k)}
   const c=document.createElement('canvas');c.width=w;c.height=h;
-  c.getContext('2d').drawImage(i,0,0,w,h);
-  r(png?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.72))};i.src=url})}
+  c.getContext('2d').drawImage(i,0,0,w,h);r(png?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.72))};i.src=url})}
 async function pvF(inp,pvId,mw,mh,png,varName){
   if(!inp.files[0])return;const raw=await readFile(inp.files[0]);
   const data=await resize(raw,mw,mh,png);window[varName]=data;
   const p=$(pvId);p.src=data;p.style.display='block'}
 
-/* ═══ DEV TABS ═══ */
 function dTab(t,el){curTab=t;document.querySelectorAll('.dt').forEach(x=>x.classList.remove('on'));
   if(el)el.classList.add('on');renderTab()}
 function renderTab(){const c=$('dc');
   if(curTab==='bg')rBgs(c);else if(curTab==='ch')rChars(c);
   else if(curTab==='sc')rScenes(c);else rSettings(c)}
 
-/* ── Backgrounds ── */
 function rBgs(c){let h='<div class="dgrid">';
   D.bgs.forEach(b=>{h+=`<div class="dcard" onclick="eBg('${b.id}')">
     <div class="dcimg" style="background-image:url('${b.data}')"></div>
     <div class="dcinf"><div class="dcn">${esc(b.name)}</div><div class="dcs">Фон</div></div></div>`});
   h+=`<div class="dcard dcadd" onclick="aBg()"><div class="ico">+</div><span>Добавить фон</span></div></div>`;
   c.innerHTML=h}
-function aBg(){editId=null;_bgD=null;$('bg-t').textContent='Добавить фон';
-  $('bg-name').value='';$('bg-file').value='';$('bg-pv').style.display='none';
-  $('bg-del').style.display='none';showM('M-bg')}
-function eBg(id){const b=D.bgs.find(x=>x.id===id);if(!b)return;
-  editId=id;_bgD=null;$('bg-t').textContent='Редактировать';
-  $('bg-name').value=b.name;$('bg-file').value='';
-  $('bg-pv').src=b.data;$('bg-pv').style.display='block';
-  $('bg-del').style.display='inline-block';showM('M-bg')}
-async function saveBg(){const n=$('bg-name').value.trim();
-  if(!n){toast('Введите название',1);return}
+function aBg(){editId=null;_bgD=null;$('bg-t').textContent='Добавить фон';$('bg-name').value='';
+  $('bg-file').value='';$('bg-pv').style.display='none';$('bg-del').style.display='none';showM('M-bg')}
+function eBg(id){const b=D.bgs.find(x=>x.id===id);if(!b)return;editId=id;_bgD=null;
+  $('bg-t').textContent='Редактировать';$('bg-name').value=b.name;$('bg-file').value='';
+  $('bg-pv').src=b.data;$('bg-pv').style.display='block';$('bg-del').style.display='inline-block';showM('M-bg')}
+async function saveBg(){const n=$('bg-name').value.trim();if(!n){toast('Введите название',1);return}
   if(editId){const b=D.bgs.find(x=>x.id===editId);if(b){b.name=n;if(_bgD)b.data=_bgD}}
   else{if(!_bgD){toast('Выберите изображение',1);return}D.bgs.push({id:uid(),name:n,data:_bgD})}
   _bgD=null;await save();hideM('M-bg');renderTab();toast('Фон сохранён')}
-async function delBg(){if(!confirm('Удалить?'))return;
-  D.bgs=D.bgs.filter(x=>x.id!==editId);await save();hideM('M-bg');renderTab();toast('Удалено')}
+async function delBg(){if(!confirm('Удалить?'))return;D.bgs=D.bgs.filter(x=>x.id!==editId);
+  await save();hideM('M-bg');renderTab();toast('Удалено')}
 
-/* ── Characters ── */
 function rChars(c){let h='<div class="dgrid">';
   D.chars.forEach(ch=>{h+=`<div class="dcard" onclick="eCh('${ch.id}')">
     <div class="dcimg" style="background-image:url('${ch.data}');background-size:contain;background-repeat:no-repeat;background-position:center"></div>
     <div class="dcinf"><div class="dcn">${esc(ch.name)}</div><div class="dcs">Персонаж</div></div></div>`});
   h+=`<div class="dcard dcadd" onclick="aCh()"><div class="ico">+</div><span>Добавить</span></div></div>`;
   c.innerHTML=h}
-function aCh(){editId=null;_chD=null;$('ch-t').textContent='Добавить персонажа';
-  $('ch-name').value='';$('ch-file').value='';$('ch-pv').style.display='none';
-  $('ch-del').style.display='none';showM('M-ch')}
-function eCh(id){const ch=D.chars.find(x=>x.id===id);if(!ch)return;
-  editId=id;_chD=null;$('ch-t').textContent='Редактировать';
-  $('ch-name').value=ch.name;$('ch-file').value='';
-  $('ch-pv').src=ch.data;$('ch-pv').style.display='block';
-  $('ch-del').style.display='inline-block';showM('M-ch')}
-async function saveCh(){const n=$('ch-name').value.trim();
-  if(!n){toast('Введите имя',1);return}
+function aCh(){editId=null;_chD=null;$('ch-t').textContent='Добавить персонажа';$('ch-name').value='';
+  $('ch-file').value='';$('ch-pv').style.display='none';$('ch-del').style.display='none';showM('M-ch')}
+function eCh(id){const ch=D.chars.find(x=>x.id===id);if(!ch)return;editId=id;_chD=null;
+  $('ch-t').textContent='Редактировать';$('ch-name').value=ch.name;$('ch-file').value='';
+  $('ch-pv').src=ch.data;$('ch-pv').style.display='block';$('ch-del').style.display='inline-block';showM('M-ch')}
+async function saveCh(){const n=$('ch-name').value.trim();if(!n){toast('Введите имя',1);return}
   if(editId){const ch=D.chars.find(x=>x.id===editId);if(ch){ch.name=n;if(_chD)ch.data=_chD}}
   else{if(!_chD){toast('Выберите изображение',1);return}D.chars.push({id:uid(),name:n,data:_chD})}
   _chD=null;await save();hideM('M-ch');renderTab();toast('Сохранено')}
-async function delCh(){if(!confirm('Удалить?'))return;
-  D.chars=D.chars.filter(x=>x.id!==editId);await save();hideM('M-ch');renderTab();toast('Удалено')}
+async function delCh(){if(!confirm('Удалить?'))return;D.chars=D.chars.filter(x=>x.id!==editId);
+  await save();hideM('M-ch');renderTab();toast('Удалено')}
 
-/* ── Scenes ── */
 function rScenes(c){let h='<div class="dgrid">';
   D.scenes.forEach(sc=>{const isS=sc.id===D.start;const bg=D.bgs.find(b=>b.id===sc.bgId);
     h+=`<div class="dcard${isS?' start':''}" onclick="eSc('${sc.id}')">
@@ -575,13 +522,10 @@ function rScenes(c){let h='<div class="dgrid">';
   c.innerHTML=h}
 
 function mkStep(){return{chId:null,pos:'center',text:'',hasCh:false,choices:[]}}
-
-function aSc(){editId=null;
-  eScData={id:uid(),name:'',bgId:null,steps:[mkStep()],next:null};
+function aSc(){editId=null;eScData={id:uid(),name:'',bgId:null,steps:[mkStep()],next:null};
   $('sc-t').textContent='Добавить сцену';rScEd();showM('M-sc')}
-
-function eSc(id){const sc=D.scenes.find(s=>s.id===id);if(!sc)return;
-  editId=id;eScData=JSON.parse(JSON.stringify(sc));
+function eSc(id){const sc=D.scenes.find(s=>s.id===id);if(!sc)return;editId=id;
+  eScData=JSON.parse(JSON.stringify(sc));
   eScData.steps.forEach(s=>{if(s.hasCh===undefined)s.hasCh=!!(s.choices&&s.choices.length)});
   $('sc-t').textContent='Редактировать';rScEd();showM('M-sc')}
 
@@ -601,8 +545,7 @@ function gather(){const ed=$('sc-ed');if(!ed)return;
 
 function rScEd(){const sc=eScData;
   const bgO=D.bgs.map(b=>`<option value="${b.id}"${sc.bgId===b.id?' selected':''}>${esc(b.name)}</option>`).join('');
-  const allSc=D.scenes.filter(s=>s.id!==sc.id);
-  let stH='';
+  const allSc=D.scenes.filter(s=>s.id!==sc.id);let stH='';
   sc.steps.forEach((st,i)=>{
     const chO=D.chars.map(c=>`<option value="${c.id}"${st.chId===c.id?' selected':''}>${esc(c.name)}</option>`).join('');
     let chcH='';
@@ -610,8 +553,8 @@ function rScEd(){const sc=eScData;
       chcH='<div class="csec"><label style="font-size:11px;color:var(--sub)">Варианты:</label>';
       (st.choices||[]).forEach((ch,ci)=>{
         const csO=allSc.map(s=>`<option value="${s.id}"${ch.target===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
-        chcH+=`<div class="crow"><input class="sc-ct" name="choice-text-${i}-${ci}" value="${esc(ch.text)}" placeholder="Текст">
-          <select class="sc-cs" name="choice-scene-${i}-${ci}"><option value="">→ Сцена…</option>${csO}</select>
+        chcH+=`<div class="crow"><input class="sc-ct" name="ct-${i}-${ci}" value="${esc(ch.text)}" placeholder="Текст">
+          <select class="sc-cs" name="cs-${i}-${ci}"><option value="">→ Сцена…</option>${csO}</select>
           <button onclick="gather();eScData.steps[${i}].choices.splice(${ci},1);rScEd()">✕</button></div>`});
       chcH+=`<button class="bsm" onclick="gather();eScData.steps[${i}].choices.push({text:'',target:null});rScEd()">+ Вариант</button></div>`}
     stH+=`<div class="si"><div class="sih"><span class="sin">Шаг ${i+1}</span><div class="sia">
@@ -620,19 +563,18 @@ function rScEd(){const sc=eScData;
       ${sc.steps.length>1?`<button onclick="gather();eScData.steps.splice(${i},1);rScEd()">✕</button>`:''}
     </div></div>
     <div class="sf">
-      <div><label for="sc-ch-${i}">Персонаж</label><select class="sc-ch" id="sc-ch-${i}" name="sc-ch-${i}"><option value="">— Рассказчик —</option>${chO}</select></div>
-      <div><label for="sc-ps-${i}">Позиция</label><select class="sc-ps" id="sc-ps-${i}" name="sc-ps-${i}">
+      <div><label for="sch${i}">Персонаж</label><select class="sc-ch" id="sch${i}" name="sch${i}"><option value="">— Рассказчик —</option>${chO}</select></div>
+      <div><label for="sps${i}">Позиция</label><select class="sc-ps" id="sps${i}" name="sps${i}">
         <option value="left"${st.pos==='left'?' selected':''}>Слева</option>
         <option value="center"${st.pos==='center'?' selected':''}>По центру</option>
         <option value="right"${st.pos==='right'?' selected':''}>Справа</option></select></div>
-      <div class="fw"><label for="sc-tx-${i}">Текст</label><textarea class="sc-tx" id="sc-tx-${i}" name="sc-tx-${i}" placeholder="Диалог…">${esc(st.text)}</textarea></div>
+      <div class="fw"><label for="stx${i}">Текст</label><textarea class="sc-tx" id="stx${i}" name="stx${i}" placeholder="Диалог…">${esc(st.text)}</textarea></div>
     </div>
     <div class="cbtog">
       <input type="checkbox" id="cb${i}" name="cb${i}"${st.hasCh?' checked':''}
         onchange="gather();eScData.steps[${i}].hasCh=this.checked;if(this.checked&&(!eScData.steps[${i}].choices||!eScData.steps[${i}].choices.length))eScData.steps[${i}].choices=[{text:'',target:null}];rScEd()">
       <label for="cb${i}">Варианты выбора</label>
     </div>${chcH}</div>`});
-
   const nxO=allSc.map(s=>`<option value="${s.id}"${sc.next===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
   $('sc-ed').innerHTML=`
     <div class="fg"><label for="sce-name">Название</label><input id="sce-name" name="sce-name" value="${esc(sc.name)}" placeholder="Название…"></div>
@@ -646,199 +588,190 @@ function rScEd(){const sc=eScData;
       ${editId?'<button class="bd" onclick="delSc()">Удалить</button>':''}</div>`}
 
 function swSt(i,d){const s=eScData.steps;[s[i],s[i+d]]=[s[i+d],s[i]];rScEd()}
-
 async function saveSc(){gather();const sc=eScData;sc.name=sc.name||'Без названия';
   sc.steps.forEach(s=>{if(!s.hasCh)s.choices=[]});
   if(editId){const idx=D.scenes.findIndex(s=>s.id===editId);if(idx>=0)D.scenes[idx]=sc}
   else{D.scenes.push(sc);if(!D.start)D.start=sc.id}
   await save();hideM('M-sc');renderTab();toast('Сцена сохранена')}
-
-async function delSc(){if(!confirm('Удалить?'))return;
-  D.scenes=D.scenes.filter(s=>s.id!==editId);
+async function delSc(){if(!confirm('Удалить?'))return;D.scenes=D.scenes.filter(s=>s.id!==editId);
   if(D.start===editId)D.start=D.scenes.length?D.scenes[0].id:null;
   await save();hideM('M-sc');renderTab();toast('Удалено')}
 
-/* ── Settings ── */
 function rSettings(c){
   const scO=D.scenes.map(s=>`<option value="${s.id}"${D.start===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
   c.innerHTML=`
-    <div class="setsec"><h3>✏️ Название</h3><div class="fg">
-      <label for="set-title">Заголовок новеллы</label>
-      <input id="set-title" name="set-title" value="${esc(D.title)}" onchange="D.title=this.value;save();updateMenu();toast('Обновлено')"></div></div>
-    <div class="setsec"><h3>⭐ Начальная сцена</h3><div class="fg">
-      <label for="set-start">Выберите сцену</label>
-      <select id="set-start" name="set-start" onchange="D.start=this.value||null;save();updateMenu();toast('Обновлено')">
-        <option value="">— Не выбрана —</option>${scO}</select></div></div>
+    <div class="setsec"><h3>✏️ Название</h3><div class="fg"><label for="st-t">Заголовок</label>
+      <input id="st-t" name="st-t" value="${esc(D.title)}" onchange="D.title=this.value;save();updateMenu();toast('OK')"></div></div>
+    <div class="setsec"><h3>⭐ Начальная сцена</h3><div class="fg"><label for="st-s">Сцена</label>
+      <select id="st-s" name="st-s" onchange="D.start=this.value||null;save();updateMenu();toast('OK')">
+        <option value="">— Нет —</option>${scO}</select></div></div>
     <div class="setsec"><h3>💾 Экспорт / Импорт</h3><div class="brow">
       <button class="bs" onclick="expD()">📤 Экспорт</button>
       <label class="bs" style="cursor:pointer">📥 Импорт
-        <input type="file" accept=".json" name="import-file" style="display:none" onchange="impD(this)"></label></div></div>
-    <div class="setsec"><h3>🗑 Очистка</h3>
-      <p style="color:var(--sub);font-size:13px;margin-bottom:10px">Удалить все данные.</p>
-      <button class="bd" onclick="clearAll()">Удалить всё</button></div>
+        <input type="file" accept=".json" name="imp" style="display:none" onchange="impD(this)"></label></div></div>
+    <div class="setsec"><h3>🗑 Очистка</h3><button class="bd" onclick="clearAll()">Удалить всё</button></div>
     <div class="setsec"><h3>📊 Статистика</h3>
       <p style="color:var(--sub);font-size:13px">Фонов: ${D.bgs.length} · Персонажей: ${D.chars.length} · Сцен: ${D.scenes.length}</p></div>`}
-
 function expD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='novel.json';a.click()}
 async function impD(inp){if(!inp.files[0])return;try{const t=await inp.files[0].text();const d=JSON.parse(t);
-  if(d.bgs&&d.scenes){D=d;await save();renderTab();updateMenu();toast('Импортировано')}
-  else toast('Неверный формат',1)}catch(e){toast('Ошибка',1)}}
+  if(d.bgs&&d.scenes){D=d;await save();renderTab();updateMenu();toast('OK')}
+  else toast('Ошибка формата',1)}catch(e){toast('Ошибка',1)}}
 async function clearAll(){if(!confirm('Удалить ВСЕ?'))return;
   D={title:'Я НЕ ПРИДУМАЛ',bgs:[],chars:[],scenes:[],start:null};
   await save();renderTab();updateMenu();toast('Очищено')}
 
 
-/* ═══════════════════════════════════════════
-   GAME ENGINE — simplified, no double timeout
-   ═══════════════════════════════════════════ */
+/* ═══════════════════════════════════
+   GAME ENGINE — максимально простой
+   ═══════════════════════════════════ */
 
 async function startGame(){
-  dbg('Загрузка данных...');
+  debugLog=[];
+  dbg('Загрузка...');
 
   const ok=await loadData();
+  if(!ok){toast('Ошибка сервера!',1);return}
   updateMenu();
 
-  if(!ok){
-    toast('Ошибка загрузки данных с сервера!',1);
-    return;
-  }
+  dbg('Сцен: '+D.scenes.length+' start='+D.start);
 
-  if(!D.scenes.length){
-    toast('Новелла пуста! Создайте контент через 🔧',1);
-    return;
-  }
-
+  if(!D.scenes.length){toast('Новелла пуста!',1);return}
   const startScene=D.scenes.find(s=>s.id===D.start);
-  if(!D.start||!startScene){
-    toast('Не выбрана начальная сцена! 🔧 → Настройки',1);
-    return;
-  }
+  if(!startScene){toast('Нет начальной сцены!',1);return}
+  if(!startScene.steps||!startScene.steps.length){toast('Сцена пуста!',1);return}
 
-  if(!startScene.steps||!startScene.steps.length){
-    toast('В начальной сцене нет шагов диалога!',1);
-    return;
-  }
+  dbg('Старт: «'+startScene.name+'» шагов='+startScene.steps.length);
 
-  dbg('Запуск: '+startScene.name+' ('+startScene.steps.length+' шагов)');
-
-  // переход на экран игры
+  // показываем игровой экран
   scr('S-game');
 
-  // сброс
+  // полный сброс
   $('g-end').classList.remove('on');
   $('g-choices').classList.remove('on');
   $('g-char').classList.remove('vis','pl','pc','pr');
+  $('g-char').style.display='none';
   $('g-name').textContent='';
   $('g-txt').textContent='';
 
-  // СРАЗУ загружаем сцену без задержки
-  loadScene(D.start);
+  // ПРИНУДИТЕЛЬНО делаем диалог видимым
+  var dlg=$('g-dlg');
+  dlg.style.display='block';
+  dlg.style.visibility='visible';
+  dlg.style.opacity='1';
+
+  dbg('Экран готов, запуск сцены...');
+
+  // загружаем сцену напрямую
+  doLoadScene(D.start);
 }
 
-function loadScene(sid){
-  try{
-    dbg('loadScene: '+sid);
-    const sc=D.scenes.find(s=>s.id===sid);
+function doLoadScene(sid){
+  dbg('doLoadScene: '+sid);
 
-    if(!sc){
-      dbg('ERROR: сцена не найдена: '+sid);
-      toast('Ошибка: сцена не найдена!',1);
-      endGame();
-      return;
-    }
+  var sc=D.scenes.find(function(s){return s.id===sid});
 
-    if(!sc.steps||!sc.steps.length){
-      dbg('Сцена пуста, переход: '+sc.next);
-      if(sc.next)loadScene(sc.next);
-      else endGame();
-      return;
-    }
-
-    G.sid=sid;
-    G.step=0;
-
-    // фон — СРАЗУ, без setTimeout
-    const bg=D.bgs.find(b=>b.id===sc.bgId);
-    const bgEl=$('g-bg');
-    if(bg){
-      bgEl.style.backgroundImage=`url('${bg.data}')`;
-      bgEl.style.backgroundColor='transparent';
-      dbg('Фон: '+bg.name);
-    }else{
-      bgEl.style.backgroundImage='none';
-      bgEl.style.backgroundColor='#1e1e3e';
-      dbg('Фон: по умолчанию');
-    }
-
-    // первый шаг — СРАЗУ
-    showStep();
-
-  }catch(e){
-    dbg('ERROR loadScene: '+e.message);
-    console.error(e);
-    toast('Ошибка загрузки сцены!',1);
+  if(!sc){
+    dbg('ОШИБКА: сцена '+sid+' не найдена!');
+    dbg('Доступные сцены: '+D.scenes.map(function(s){return s.id}).join(', '));
+    endGame();
+    return;
   }
+
+  if(!sc.steps||sc.steps.length===0){
+    dbg('Сцена пуста → next='+sc.next);
+    if(sc.next){doLoadScene(sc.next)}else{endGame()}
+    return;
+  }
+
+  G.sid=sid;
+  G.step=0;
+
+  // ставим фон
+  var bg=D.bgs.find(function(b){return b.id===sc.bgId});
+  var bgEl=$('g-bg');
+  if(bg){
+    bgEl.style.backgroundImage='url('+bg.data+')';
+    dbg('Фон: '+bg.name);
+  }else{
+    bgEl.style.backgroundImage='none';
+    bgEl.style.backgroundColor='#1e1e3e';
+    dbg('Фон: стандартный');
+  }
+
+  // показываем первый шаг
+  doShowStep();
 }
 
-function showStep(){
-  try{
-    const sc=D.scenes.find(s=>s.id===G.sid);
-    if(!sc){dbg('ERROR: нет сцены');endGame();return}
+function doShowStep(){
+  var sc=D.scenes.find(function(s){return s.id===G.sid});
+  if(!sc){dbg('Нет сцены!');endGame();return}
 
-    if(G.step>=sc.steps.length){
-      dbg('Все шаги пройдены → next='+sc.next);
-      if(sc.next)loadScene(sc.next);else endGame();
-      return;
-    }
+  if(G.step>=sc.steps.length){
+    dbg('Все шаги пройдены → next='+sc.next);
+    if(sc.next){doLoadScene(sc.next)}else{endGame()}
+    return;
+  }
 
-    const st=sc.steps[G.step];
-    dbg('Шаг '+(G.step+1)+'/'+sc.steps.length);
+  var st=sc.steps[G.step];
+  var stepText=st.text||'(пустой текст)';
 
-    // персонаж
-    const cel=$('g-char');
-    if(st.chId){
-      const ch=D.chars.find(c=>c.id===st.chId);
-      if(ch){
-        cel.src=ch.data;
-        cel.classList.remove('pl','pc','pr');
-        const p=st.pos||'center';
-        cel.classList.add(p==='left'?'pl':p==='right'?'pr':'pc');
-        cel.classList.add('vis');
-        $('g-name').textContent=ch.name;
-      }else{
-        cel.classList.remove('vis');
-        $('g-name').textContent='';
-      }
+  dbg('Шаг '+(G.step+1)+'/'+sc.steps.length+': «'+stepText.substring(0,30)+'...»');
+
+  // персонаж
+  var cel=$('g-char');
+  if(st.chId){
+    var ch=D.chars.find(function(c){return c.id===st.chId});
+    if(ch){
+      cel.src=ch.data;
+      cel.className='';
+      cel.classList.add(st.pos==='left'?'pl':st.pos==='right'?'pr':'pc');
+      cel.classList.add('vis');
+      cel.style.display='block';
+      $('g-name').textContent=ch.name;
+      dbg('Персонаж: '+ch.name);
     }else{
-      cel.classList.remove('vis');
+      cel.style.display='none';cel.classList.remove('vis');
       $('g-name').textContent='';
     }
-
-    // текст
-    const txt=st.text||'(пустой шаг)';
-    typeText(txt);
-
-    // индикатор
-    $('g-ind').style.display=(st.hasCh&&st.choices&&st.choices.length)?'none':'block';
-
-  }catch(e){
-    dbg('ERROR showStep: '+e.message);
-    console.error(e);
+  }else{
+    cel.style.display='none';cel.classList.remove('vis');
+    $('g-name').textContent='';
   }
+
+  // ПРИНУДИТЕЛЬНО ставим текст
+  var txtEl=$('g-txt');
+  txtEl.style.color='#ffffff';
+  txtEl.style.fontSize='18px';
+
+  // запускаем набор текста
+  doTypeText(stepText);
+
+  // индикатор
+  $('g-ind').style.display=(st.hasCh&&st.choices&&st.choices.length)?'none':'block';
 }
 
-function typeText(text){
+function doTypeText(text){
   stopTyping();
   G.full=text;
   G.typing=true;
-  const el=$('g-txt');
-  let i=0;
+
+  var el=$('g-txt');
+  var i=0;
   el.textContent='';
-  G.timer=setInterval(()=>{
-    if(i<text.length){el.textContent+=text[i];i++}
-    else{stopTyping();afterType()}
-  },28);
+
+  dbg('Печатаю: «'+text.substring(0,40)+'»');
+
+  G.timer=setInterval(function(){
+    if(i<text.length){
+      el.textContent=el.textContent+text[i];
+      i++;
+    }else{
+      stopTyping();
+      dbg('Текст завершён');
+      doAfterType();
+    }
+  },30);
 }
 
 function stopTyping(){
@@ -846,11 +779,13 @@ function stopTyping(){
   G.typing=false;
 }
 
-function afterType(){
-  const sc=D.scenes.find(s=>s.id===G.sid);if(!sc)return;
-  const st=sc.steps[G.step];
+function doAfterType(){
+  var sc=D.scenes.find(function(s){return s.id===G.sid});
+  if(!sc)return;
+  var st=sc.steps[G.step];
   if(st&&st.hasCh&&st.choices&&st.choices.length){
-    showChoicesUI(st.choices);
+    dbg('Показываю '+st.choices.length+' вариант(ов)');
+    doShowChoices(st.choices);
   }
 }
 
@@ -858,47 +793,59 @@ function advance(){
   if(G.typing){
     stopTyping();
     $('g-txt').textContent=G.full;
-    afterType();
+    doAfterType();
     return;
   }
-  const sc=D.scenes.find(s=>s.id===G.sid);if(!sc)return;
-  const st=sc.steps[G.step];
+  var sc=D.scenes.find(function(s){return s.id===G.sid});
+  if(!sc)return;
+  var st=sc.steps[G.step];
   if(st&&st.hasCh&&st.choices&&st.choices.length)return;
+
   G.step++;
+  dbg('→ шаг '+G.step);
+
   if(G.step>=sc.steps.length){
-    if(sc.next)loadScene(sc.next);else endGame();
-  }else showStep();
+    if(sc.next){doLoadScene(sc.next)}else{endGame()}
+  }else{
+    doShowStep();
+  }
 }
 
-function showChoicesUI(choices){
-  const c=$('g-choices');
-  c.innerHTML=choices.map((ch,i)=>
-    `<button class="chb" onclick="pick(${i})">${esc(ch.text||'Вариант '+(i+1))}</button>`
-  ).join('');
+function doShowChoices(choices){
+  var c=$('g-choices');
+  var html='';
+  for(var i=0;i<choices.length;i++){
+    html+='<button class="chb" onclick="doPick('+i+')">'+esc(choices[i].text||'Вариант '+(i+1))+'</button>';
+  }
+  c.innerHTML=html;
   c.classList.add('on');
 }
 
-function pick(i){
-  const sc=D.scenes.find(s=>s.id===G.sid);if(!sc)return;
-  const st=sc.steps[G.step];if(!st||!st.choices||!st.choices[i])return;
+function doPick(i){
+  var sc=D.scenes.find(function(s){return s.id===G.sid});
+  if(!sc)return;
+  var st=sc.steps[G.step];
+  if(!st||!st.choices||!st.choices[i])return;
   $('g-choices').classList.remove('on');
-  const t=st.choices[i].target;
-  if(t)loadScene(t);else endGame();
+  var t=st.choices[i].target;
+  dbg('Выбор '+i+' → '+(t||'конец'));
+  if(t){doLoadScene(t)}else{endGame()}
 }
 
 function endGame(){
   stopTyping();
-  dbg('КОНЕЦ ИГРЫ');
+  dbg('*** КОНЕЦ ***');
   $('g-end').classList.add('on');
 }
 
+
 /* ═══ INIT ═══ */
-(async()=>{
+(async function(){
   if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand()}
   await loadData();
   updateMenu();
   $('loader').classList.add('hide');
-  setTimeout(()=>$('loader').style.display='none',600);
+  setTimeout(function(){$('loader').style.display='none'},600);
 })();
 </script>
 </body>
