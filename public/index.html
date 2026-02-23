@@ -44,6 +44,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 #d-canvas{width:100%;height:100%}
 #d-over{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.7);gap:16px;z-index:5}
 #d-over.on{display:flex}
+@keyframes sansBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
 #d-over h2{font-size:clamp(24px,4vw,44px);color:#e94560}
 #d-over p{color:#7878a0;font-size:16px}
 #S-game{flex-direction:column!important}
@@ -266,14 +267,14 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
   <div id="bf-result"><h2 id="bf-res-title"></h2><div class="stats" id="bf-res-stats"></div><button class="bplay" id="bf-res-btn" style="font-size:16px;padding:12px 44px"></button></div>
 </div>
 
-<!-- UNDERTALE BOSS (обновлённый) -->
+<!-- UNDERTALE BOSS -->
 <div id="S-ut" class="scr">
   <button class="ut-bbk" onclick="utStop();toMenu()">← Меню</button>
 
-  <!-- Sans helper летает поверх -->
-  <div id="ut-sans" style="position:absolute;z-index:20;pointer-events:none;transition:left .3s ease,top .3s ease">
-    <div style="font-size:clamp(28px,4vw,48px);filter:drop-shadow(0 0 8px rgba(100,200,255,.5))">💀</div>
-    <div id="ut-sans-txt" style="position:absolute;top:-28px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:'Courier New',monospace;font-size:12px;color:#42a5f5;opacity:0;transition:opacity .3s;background:rgba(0,0,0,.7);padding:2px 8px;border-radius:6px"></div>
+  <!-- SANS HELPER — летает поверх всего -->
+  <div id="ut-sans" style="position:absolute;z-index:25;pointer-events:none;display:none">
+    <div id="ut-sans-sprite" style="font-size:clamp(32px,5vw,56px);animation:sansBob 2s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(80,180,255,.6))">💀</div>
+    <div id="ut-sans-txt" style="position:absolute;top:-30px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:'Courier New',monospace;font-size:clamp(11px,1.3vw,15px);color:#64b5f6;opacity:0;transition:opacity .3s;background:rgba(0,0,20,.85);padding:3px 10px;border-radius:8px;border:1px solid #42a5f5"></div>
   </div>
 
   <div id="ut-top">
@@ -311,7 +312,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
     <button class="bplay" id="ut-res-btn" style="font-size:16px;padding:12px 44px;font-family:'Courier New',monospace"></button>
   </div>
 </div>
-
+  
 <div id="S-dev" class="scr">
   <div class="dh"><button class="bs" onclick="toMenu()" style="padding:7px 14px;font-size:13px">← Назад</button><h1>Панель разработчика</h1></div>
   <div class="dtabs"><div class="dt on" onclick="dTab('bg',this)">🖼 Фоны</div><div class="dt" onclick="dTab('ch',this)">👤 Персонажи</div><div class="dt" onclick="dTab('sc',this)">📜 Сцены</div><div class="dt" onclick="dTab('set',this)">⚙ Настройки</div></div>
@@ -592,6 +593,9 @@ function utStart(sd){
   UT.shakeTime=0;UT.bossFlash=0;
   UT.pSpeed=[3,3.5,4.2][UT.diff-1];
 
+  // ← SANS INIT — обязательно сбросить parentW чтоб пересчиталось
+  UT.sans={x:0,y:0,tx:0,ty:0,moveTimer:0,throwTimer:3000,parentW:0,parentH:0};
+
   var ch=sd.bfChar?findChar(sd.bfChar):null;
   if(ch){$('ut-opp-img').src=ch.data;$('ut-opp-img').style.display='block';$('ut-opp-name').textContent=ch.name;UT.bossName=ch.name}
   else{$('ut-opp-img').style.display='none';$('ut-opp-name').textContent='???';UT.bossName='???'}
@@ -601,15 +605,13 @@ function utStart(sd){
   $('ut-sub').classList.remove('show');
   $('ut-atk-bar').classList.remove('show');
 
+  // Show sans immediately
+  var sansEl=$('ut-sans');
+  if(sansEl)sansEl.style.display='block';
+
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     utSetupBox();
     utUpdateHp();
-    // init sans position relative to #S-ut
-    var utEl=$('S-ut');
-    var utRect=utEl.getBoundingClientRect();
-    UT.sans={x:utRect.width*0.08,y:utRect.height*0.45,tx:utRect.width*0.15,ty:utRect.height*0.35,moveTimer:0,throwTimer:3000,parentW:utRect.width,parentH:utRect.height};
-    var sansEl=$('ut-sans');
-    if(sansEl){sansEl.style.display='block';sansEl.style.left=UT.sans.x+'px';sansEl.style.top=UT.sans.y+'px'}
     utShowDialogue(UT_DIALOGUES[0]);
     utLoadAudio(sd.id);
     UT.active=true;
@@ -825,45 +827,61 @@ function utAddProj(x,y,vx,vy,r){
   UT.projectiles.push({el:el,x:x,y:y,vx:vx,vy:vy,r:r});
 }
 
-/* ─── SANS (positioned relative to #S-ut) ─── */
+/* ─── SANS — FIXED: position relative to #S-ut ─── */
 function utUpdateSans(){
   var s=UT.sans;
-  // smooth move
-  s.x+=(s.tx-s.x)*0.025;s.y+=(s.ty-s.y)*0.025;
+  var sansEl=$('ut-sans');
+  if(!sansEl)return;
 
-  // pick new target
+  // lazy init parentW/parentH
+  if(!s.parentW||!s.parentH){
+    var utEl=$('S-ut');
+    if(utEl){var r=utEl.getBoundingClientRect();s.parentW=r.width;s.parentH=r.height}
+    if(!s.parentW)s.parentW=800;if(!s.parentH)s.parentH=500;
+    s.x=s.parentW*0.05;s.y=s.parentH*0.4;
+    s.tx=s.parentW*0.12;s.ty=s.parentH*0.35;
+  }
+
+  // smooth move toward target
+  s.x+=(s.tx-s.x)*0.02;
+  s.y+=(s.ty-s.y)*0.02;
+
+  // pick new fly-to target
   s.moveTimer-=16;
   if(s.moveTimer<=0){
     s.moveTimer=1500+Math.random()*2500;
-    // fly within #S-ut bounds
-    s.tx=20+Math.random()*(s.parentW*0.25);
-    s.ty=s.parentH*0.2+Math.random()*(s.parentH*0.5);
+    // fly within left 30% and middle 60% height of screen
+    s.tx=10+Math.random()*(s.parentW*0.28);
+    s.ty=s.parentH*0.15+Math.random()*(s.parentH*0.55);
   }
 
-  // throw during attack
+  // throw rocks during attack phase
   if(UT.phase==='attack'){
     s.throwTimer-=16;
     if(s.throwTimer<=0){
-      s.throwTimer=2500+Math.random()*3500;
+      s.throwTimer=2000+Math.random()*4000;
       if(Math.random()>0.45){
-        // throw into box
-        utAddProj(Math.random()*UT.boxW,-10,(Math.random()-0.5)*0.8,[1.5,2,3][UT.diff-1],4);
+        // throw projectile into battle box
+        var rx=Math.random()*UT.boxW;
+        utAddProj(rx,-10,(Math.random()-0.5)*0.8,[1.5,2,3][UT.diff-1],4);
         utShowSansText(UT_SANS_PHRASES[Math.floor(Math.random()*UT_SANS_PHRASES.length)]);
       }else{
-        // hit boss
+        // hit boss directly
         var rdmg=5+Math.floor(Math.random()*15);
-        UT.bossHp=Math.max(0,UT.bossHp-rdmg);utBossFlash();
-        utShowSansText('получай! (-'+rdmg+')');
+        UT.bossHp=Math.max(0,UT.bossHp-rdmg);
+        utBossFlash();
+        utShowSansText('получай! -'+rdmg);
         if(UT.bossHp<=0){setTimeout(function(){utEnd(true)},800)}
       }
     }
   }
 
-  // update DOM position
-  var sansEl=$('ut-sans');
-  if(sansEl){sansEl.style.left=Math.round(s.x)+'px';sansEl.style.top=Math.round(s.y)+'px'}
+  // update DOM position — LEFT and TOP relative to #S-ut
+  sansEl.style.left=Math.round(s.x)+'px';
+  sansEl.style.top=Math.round(s.y)+'px';
+  sansEl.style.display='block';
 }
-
+  
 var _sansTimer=null;
 function utShowSansText(txt){
   var el=$('ut-sans-txt');if(!el)return;
@@ -1030,3 +1048,4 @@ document.addEventListener('click',function(e){
 </script>
 </body>
 </html>
+
