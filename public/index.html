@@ -603,8 +603,8 @@ function utStop(){
   UT.keys={};
   var mid=$('ut-mid');if(mid)mid.style.transform='';
   var img=$('ut-opp-img');if(img)img.style.filter='';
-  // hide sans
-  var sansEl=$('ut-sans');if(sansEl)sansEl.style.display='none';
+  // ★ REMOVE SANS
+  utRemoveSans();
   UT.sans.inited=false;
 }
 
@@ -632,9 +632,11 @@ function utStart(sd){
   $('ut-sub').classList.remove('show');
   $('ut-atk-bar').classList.remove('show');
 
+  // ★ CREATE SANS ON document.body
+  utCreateSans();
+
   requestAnimationFrame(function(){requestAnimationFrame(function(){
-    utSetupBox();
-    utUpdateHp();
+    utSetupBox();utUpdateHp();
     utShowDialogue(UT_DIALOGUES[0]);
     utLoadAudio(sd.id);
     UT.active=true;
@@ -765,45 +767,75 @@ function utSpawnBeam(){var h=Math.random()>0.5;var p=20+Math.random()*((h?UT.box
 function utAddBone(x,y,w,h,vx,vy,color){var el=document.createElement('div');el.className='ut-bone';el.style.left=x+'px';el.style.top=y+'px';el.style.width=Math.max(4,w)+'px';el.style.height=Math.max(4,h)+'px';if(color==='blue'){el.style.background='#42a5f5';el.style.boxShadow='0 0 8px #42a5f5'}else if(color==='orange'){el.style.background='#ffa726';el.style.boxShadow='0 0 8px #ffa726'}else{el.style.background='#fff'}$('ut-box').appendChild(el);UT.bones.push({el:el,x:x,y:y,w:w,h:h,vx:vx,vy:vy,color:color||'white'})}
 function utAddProj(x,y,vx,vy,r){var el=document.createElement('div');el.className='ut-proj';el.style.width=r*2+'px';el.style.height=r*2+'px';el.style.background='#fff';el.style.left=(x-r)+'px';el.style.top=(y-r)+'px';$('ut-box').appendChild(el);UT.projectiles.push({el:el,x:x,y:y,vx:vx,vy:vy,r:r})}
 
-/* ═══ SANS — position:fixed, OUTSIDE #S-ut ═══ */
-function utUpdateSans(){
-  var s=UT.sans;
-  var sansEl=$('ut-sans');
-  if(!sansEl)return;
+/* ═══ SANS — DYNAMIC ELEMENT ON document.body ═══ */
+function utCreateSans(){
+  var old=document.getElementById('ut-sans-float');
+  if(old)old.remove();
 
-  // get #S-ut viewport rect every frame
-  var utEl=$('S-ut');
-  if(!utEl||!utEl.classList.contains('on')){sansEl.style.display='none';return}
-  var R=utEl.getBoundingClientRect();
+  var wrap=document.createElement('div');
+  wrap.id='ut-sans-float';
+  wrap.style.cssText='position:fixed;z-index:99999;pointer-events:none;left:50px;top:200px;';
 
-  // first-time init
-  if(!s.inited){
-    s.inited=true;
-    s.x=R.width*0.05;
-    s.y=R.height*0.35;
-    s.tx=R.width*0.12;
-    s.ty=R.height*0.4;
-    s.moveTimer=500;
-    s.throwTimer=3000;
+  wrap.innerHTML=
+    '<div style="font-size:48px;line-height:1;filter:drop-shadow(0 0 12px rgba(80,180,255,.7));animation:sansFly 2s ease-in-out infinite">💀</div>'
+   +'<div id="ut-sans-bubble" style="position:absolute;top:-34px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:monospace;font-size:13px;color:#64b5f6;opacity:0;transition:opacity .3s;background:rgba(0,0,20,.9);padding:4px 12px;border-radius:8px;border:1px solid #42a5f5"></div>';
+
+  document.body.appendChild(wrap);
+
+  // inject animation if not exists
+  if(!document.getElementById('sans-style')){
+    var st=document.createElement('style');
+    st.id='sans-style';
+    st.textContent='@keyframes sansFly{0%,100%{transform:translateY(0) rotate(-5deg)}25%{transform:translateY(-6px) rotate(0)}50%{transform:translateY(-10px) rotate(5deg)}75%{transform:translateY(-4px) rotate(2deg)}}';
+    document.head.appendChild(st);
   }
 
-  // smooth fly toward target
+  return wrap;
+}
+
+function utRemoveSans(){
+  var el=document.getElementById('ut-sans-float');
+  if(el)el.remove();
+}
+
+var UT_SANS_PHRASES=['хех.','получай!','без шансов.','скучно...','*зевает*','не-а.','слишком медленно.','пфф.','хехехе...','мой ход.','попробуй увернись.','☠️','...zzz...','опа.'];
+
+function utUpdateSans(){
+  var s=UT.sans;
+  var el=document.getElementById('ut-sans-float');
+  if(!el)return;
+
+  // get screen bounds
+  var utEl=$('S-ut');
+  if(!utEl||!utEl.classList.contains('on')){el.style.display='none';return}
+  var R=utEl.getBoundingClientRect();
+
+  // first frame init
+  if(!s.inited){
+    s.inited=true;
+    s.x=R.width*0.06;
+    s.y=R.height*0.35;
+    s.tx=R.width*0.15;
+    s.ty=R.height*0.4;
+  }
+
+  // smooth fly
   s.x+=(s.tx-s.x)*0.025;
   s.y+=(s.ty-s.y)*0.025;
 
-  // pick new target every few seconds
+  // new target
   s.moveTimer-=16;
   if(s.moveTimer<=0){
     s.moveTimer=1500+Math.random()*2500;
     s.tx=R.width*0.03+Math.random()*(R.width*0.25);
-    s.ty=R.height*0.15+Math.random()*(R.height*0.5);
+    s.ty=R.height*0.12+Math.random()*(R.height*0.55);
   }
 
-  // throw during attacks
+  // throw during attack
   if(UT.phase==='attack'){
     s.throwTimer-=16;
     if(s.throwTimer<=0){
-      s.throwTimer=2000+Math.random()*4000;
+      s.throwTimer=2500+Math.random()*3500;
       var phrase=UT_SANS_PHRASES[Math.floor(Math.random()*UT_SANS_PHRASES.length)];
       if(Math.random()>0.45){
         utAddProj(Math.random()*UT.boxW,-10,(Math.random()-0.5)*0.8,[1.5,2,3][UT.diff-1],4);
@@ -818,18 +850,20 @@ function utUpdateSans(){
     }
   }
 
-  // ★ KEY FIX: position:fixed + viewport offset
-  sansEl.style.display='block';
-  sansEl.style.left=Math.round(R.left+s.x)+'px';
-  sansEl.style.top=Math.round(R.top+s.y)+'px';
+  // position fixed = viewport coords
+  el.style.display='block';
+  el.style.left=Math.round(R.left+s.x)+'px';
+  el.style.top=Math.round(R.top+s.y)+'px';
 }
 
-var _sansTimer=null;
+var _sansTxtTimer=null;
 function utShowSansText(txt){
-  var el=$('ut-sans-txt');if(!el)return;
-  el.textContent=txt;el.classList.add('show');
-  if(_sansTimer)clearTimeout(_sansTimer);
-  _sansTimer=setTimeout(function(){el.classList.remove('show')},1500);
+  var el=document.getElementById('ut-sans-bubble');
+  if(!el)return;
+  el.textContent=txt;
+  el.style.opacity='1';
+  if(_sansTxtTimer)clearTimeout(_sansTxtTimer);
+  _sansTxtTimer=setTimeout(function(){if(el)el.style.opacity='0'},1500);
 }
 
 /* ─── MAIN LOOP ─── */
@@ -951,6 +985,7 @@ document.addEventListener('click',function(e){
 </script>
 </body>
 </html>
+
 
 
 
