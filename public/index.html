@@ -94,7 +94,41 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 #bf-result h2{font-size:clamp(28px,5vw,52px);font-weight:900}
 #bf-result .stats{color:#7878a0;font-size:clamp(14px,2vw,20px);text-align:center;line-height:2}
 .win{color:#4ecca3}.lose{color:#e94560}
-
+/* SANS HELPER */
+#ut-sans{
+  position:fixed;
+  z-index:9000;
+  pointer-events:none;
+  display:none;
+  transition:none;
+}
+#ut-sans-body{
+  font-size:48px;
+  line-height:1;
+  animation:sansFly 2s ease-in-out infinite;
+  filter:drop-shadow(0 0 12px rgba(80,180,255,.7));
+  text-shadow:0 0 15px rgba(100,200,255,.5);
+}
+@keyframes sansFly{
+  0%,100%{transform:translateY(0) rotate(-5deg)}
+  25%{transform:translateY(-6px) rotate(0deg)}
+  50%{transform:translateY(-10px) rotate(5deg)}
+  75%{transform:translateY(-4px) rotate(2deg)}
+}
+#ut-sans-txt{
+  position:absolute;
+  top:-32px;left:50%;transform:translateX(-50%);
+  white-space:nowrap;
+  font-family:'Courier New',monospace;
+  font-size:13px;color:#64b5f6;
+  opacity:0;transition:opacity .3s;
+  background:rgba(0,0,20,.9);
+  padding:4px 12px;border-radius:8px;
+  border:1px solid #42a5f5;
+  text-shadow:0 0 5px #42a5f5;
+}
+#ut-sans-txt.show{opacity:1}
+  
 /* ═══ UNDERTALE BOSS ═══ */
 #S-ut{flex-direction:column!important;background:#000;position:relative;overflow:hidden}
 #ut-top{display:flex;align-items:flex-start;justify-content:center;padding:12px 20px;flex-shrink:0;height:30%;position:relative}
@@ -270,13 +304,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 <!-- UNDERTALE BOSS -->
 <div id="S-ut" class="scr">
   <button class="ut-bbk" onclick="utStop();toMenu()">← Меню</button>
-
-  <!-- SANS HELPER — летает поверх всего -->
-  <div id="ut-sans" style="position:absolute;z-index:25;pointer-events:none;display:none">
-    <div id="ut-sans-sprite" style="font-size:clamp(32px,5vw,56px);animation:sansBob 2s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(80,180,255,.6))">💀</div>
-    <div id="ut-sans-txt" style="position:absolute;top:-30px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:'Courier New',monospace;font-size:clamp(11px,1.3vw,15px);color:#64b5f6;opacity:0;transition:opacity .3s;background:rgba(0,0,20,.85);padding:3px 10px;border-radius:8px;border:1px solid #42a5f5"></div>
-  </div>
-
   <div id="ut-top">
     <div id="ut-opp">
       <img id="ut-opp-img" src="" alt="">
@@ -311,6 +338,12 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
     <div class="stats" id="ut-res-stats"></div>
     <button class="bplay" id="ut-res-btn" style="font-size:16px;padding:12px 44px;font-family:'Courier New',monospace"></button>
   </div>
+</div>
+
+<!-- SANS вне S-ut чтобы overflow:hidden не обрезал -->
+<div id="ut-sans">
+  <div id="ut-sans-body">💀</div>
+  <div id="ut-sans-txt"></div>
 </div>
   
 <div id="S-dev" class="scr">
@@ -533,10 +566,9 @@ function bfRt(t,c){var e=$('bf-rating-txt');e.textContent=t;e.style.color=c;e.cl
 function bfCb(){var e=$('bf-combo-txt');e.textContent=BF.combo+'x';e.classList.remove('show');void e.offsetWidth;e.classList.add('show');setTimeout(function(){e.classList.remove('show')},800)}
 function bfEnd(won){bfStop();$('bf-result').classList.add('on');$('bf-res-title').textContent=won?'ПОБЕДА!':'ПОРАЖЕНИЕ';$('bf-res-title').className=won?'win':'lose';$('bf-res-stats').innerHTML='Счёт: '+Math.floor(BF.score)+'<br>Комбо: '+BF.maxCombo+'x<br>Perfect: '+BF.perfects+'<br>Промахи: '+BF.misses;var btn=$('bf-res-btn');var sc=BF.sceneData;if(won){btn.textContent='Продолжить';btn.onclick=function(){$('bf-result').classList.remove('on');if(sc&&sc.next){scr('S-game');gameLoad(sc.next)}else{scr('S-game');gameEnd()}}}else{btn.textContent='Ещё раз';btn.onclick=function(){$('bf-result').classList.remove('on');bfStart(sc)}}}
 
-/* ═══════════════════════════════════════════════════
-   UNDERTALE BOSS v2 — FIXED SANS + FIXED WASD
-   Blue bones, Orange bones, Sans helper, screen shake
-   ═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   UNDERTALE BOSS v3 — SANS FIXED (position:fixed)
+   ═══════════════════════════════════════════ */
 var UT={
   active:false,raf:null,audio:null,
   phase:'player',sceneData:null,
@@ -547,12 +579,8 @@ var UT={
   projectiles:[],bones:[],beams:[],
   attackTimer:0,attackDur:6000,attackIdx:0,turnCount:0,spawnAcc:0,
   atkBarActive:false,atkCursorX:0,atkCursorDir:1,
-  keys:{},
-  dialogues:[],dlgIdx:0,
-  diff:2,
-  // sans
-  sans:{x:0,y:0,tx:0,ty:0,moveTimer:0,throwTimer:0,parentW:0,parentH:0},
-  // effects
+  keys:{},dialogues:[],dlgIdx:0,diff:2,
+  sans:{x:0,y:0,tx:0,ty:0,moveTimer:0,throwTimer:0,inited:false},
   shakeTime:0,bossFlash:0
 };
 
@@ -566,8 +594,7 @@ var UT_DIALOGUES=[
   ["Нет... Я не проиграю!"],
   ["..."]
 ];
-
-var UT_SANS_PHRASES=['хех.','получай!','без шансов.','скучно...','*зевает*','не-а.','слишком медленно.','пфф.','хехехе...','мой ход.'];
+var UT_SANS_PHRASES=['хех.','получай!','без шансов.','скучно...','*зевает*','не-а.','слишком медленно.','пфф.','хехехе...','мой ход.','попробуй увернись.','☠️'];
 
 function utStop(){
   UT.active=false;
@@ -576,12 +603,15 @@ function utStop(){
   UT.keys={};
   var mid=$('ut-mid');if(mid)mid.style.transform='';
   var img=$('ut-opp-img');if(img)img.style.filter='';
+  // hide sans
   var sansEl=$('ut-sans');if(sansEl)sansEl.style.display='none';
+  UT.sans.inited=false;
 }
 
 function utStart(sd){
   utStop();
   UT.sceneData=sd;
+  
   UT.diff=sd.utDiff||2;
   UT.maxHp=92;UT.hp=92;
   UT.bossMaxHp=sd.utBossHp||500;UT.bossHp=UT.bossMaxHp;
@@ -1048,4 +1078,5 @@ document.addEventListener('click',function(e){
 </script>
 </body>
 </html>
+
 
