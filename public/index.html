@@ -385,18 +385,12 @@ function delCh(){if(!confirm('Удалить персонажа?'))return;D.char
 function rScenes(c){var h='<div class="dgrid">';D.scenes.forEach(function(sc){var isS=sc.id===D.start;var bg=D.bgs.find(function(b){return b.id===sc.bgId});h+='<div class="dcard'+(isS?' start':'')+'" onclick="eSc(\''+sc.id+'\')"><div class="dcimg" style="'+(bg?'background-image:url(\''+bg.data+'\')':'display:flex;align-items:center;justify-content:center;font-size:38px;color:#7878a0')+'">'+(!bg?'📜':'')+'</div><div class="dcinf"><div class="dcn">'+(sc.bossFight?'🎵 ':sc.utBoss?'💀 ':'')+esc(sc.name)+'</div><div class="dcs">'+(isS?'⭐ Начальная':sc.steps.length+' шаг.')+'</div></div></div>'});h+='<div class="dcard dcadd" onclick="aSc()"><div class="ico">+</div><span>Добавить</span></div></div>';c.innerHTML=h}
 
 function mkStep(){return{chId:null,pos:'center',text:'',hasCh:false,choices:[]}}
-
 function aSc(){editId=null;eScData={id:uid(),name:'',bgId:null,steps:[mkStep()],next:null,bossFight:false,bfBpm:140,bfDur:60,bfSongName:'',bfChar:null,utBoss:false,utDiff:2,utBossHp:500};$('sc-t').textContent='+ Сцена';rScEd();showM('M-sc')}
-
 function eSc(id){var sc=D.scenes.find(function(s){return s.id===id});if(!sc)return;editId=id;eScData=JSON.parse(JSON.stringify(sc));if(!eScData.bfBpm)eScData.bfBpm=140;if(!eScData.bfDur)eScData.bfDur=60;if(!eScData.utDiff)eScData.utDiff=2;if(!eScData.utBossHp)eScData.utBossHp=500;eScData.steps.forEach(function(s){if(s.hasCh===undefined)s.hasCh=!!(s.choices&&s.choices.length)});$('sc-t').textContent='Ред. сцену';rScEd();showM('M-sc');if(editId)chkAudio(eScData.id)}
-
 function chkAudio(id){fetch('/api/audio-check/'+id).then(function(r){return r.json()}).then(function(d){var el=document.getElementById('bf-ast');if(!el)return;if(d.exists)el.innerHTML='<div class="audio-info"><span class="ai-name">🎵 Загружено ('+(d.size/1024/1024).toFixed(1)+'МБ)</span><button onclick="pvAud(\''+id+'\')">▶</button><button onclick="dlAud(\''+id+'\')">✕</button></div>';else el.innerHTML='<div style="color:#7878a0;font-size:12px;margin-top:6px">Не загружено → авто-генерация</div>'}).catch(function(){})}
-
-function ulAud(inp){if(!inp.files[0]||!eScData)return;var f=inp.files[0];var ext=f.name.split('.').pop();var el=document.getElementById('bf-ast');if(el)el.innerHTML='<div style="color:#ffcc00;font-size:13px">⏳ Загрузка...</div>';var r=new FileReader;r.onload=function(){fetch('/api/audio/'+eScData.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:r.result.split(',')[1],ext:ext})}).then(function(r){return r.json()}).then(function(d){if(d.ok){toast('🎵 Аудио загружено!');chkAudio(eScData.id)}else toast('Ошибка загрузки!',1)}).catch(function(){toast('Ошибка загрузки!',1)})};r.readAsDataURL(f)}
-
+function ulAud(inp){if(!inp.files[0]||!eScData)return;var f=inp.files[0];var ext=f.name.split('.').pop();var el=document.getElementById('bf-ast');if(el)el.innerHTML='<div style="color:#ffcc00;font-size:13px">⏳ Загрузка...</div>';var r=new FileReader;r.onload=function(){fetch('/api/audio/'+eScData.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:r.result.split(',')[1],ext:ext})}).then(function(r){return r.json()}).then(function(d){if(d.ok){toast('🎵 OK');chkAudio(eScData.id)}else toast('Ошибка!',1)}).catch(function(){toast('Ошибка!',1)})};r.readAsDataURL(f)}
 function pvAud(id){if(window._pa){window._pa.pause();window._pa=null;return}window._pa=new Audio('/api/audio/'+id);window._pa.volume=.5;window._pa.play().catch(function(){});setTimeout(function(){if(window._pa){window._pa.pause();window._pa=null}},10000)}
-
-function dlAud(id){if(!confirm('Удалить аудио?'))return;fetch('/api/audio/'+id,{method:'DELETE'}).then(function(){toast('Аудио удалено');chkAudio(id)})}
+function dlAud(id){if(!confirm('Удалить аудио?'))return;fetch('/api/audio/'+id,{method:'DELETE'}).then(function(){toast('OK');chkAudio(id)})}
 
 function gather(){
   var ed=$('sc-ed');if(!ed)return;
@@ -439,7 +433,7 @@ function rScEd(){
       chcH='<div class="csec">';
       (st.choices||[]).forEach(function(ch,ci){
         var csO='';allSc.forEach(function(s){csO+='<option value="'+s.id+'"'+(ch.target===s.id?' selected':'')+'>'+esc(s.name)+'</option>'});
-        chcH+='<div class="crow"><input class="sc-ct" name="ct'+i+'_'+ci+'" value="'+esc(ch.text)+'" placeholder="Текст выбора"><select class="sc-cs" name="cs'+i+'_'+ci+'"><option value="">→ Конец</option>'+csO+'</select><button onclick="gather();eScData.steps['+i+'].choices.splice('+ci+',1);rScEd()">✕</button></div>';
+        chcH+='<div class="crow"><input class="sc-ct" name="ct'+i+'_'+ci+'" value="'+esc(ch.text)+'" placeholder="Текст"><select class="sc-cs" name="cs'+i+'_'+ci+'"><option value="">→ Конец</option>'+csO+'</select><button onclick="gather();eScData.steps['+i+'].choices.splice('+ci+',1);rScEd()">✕</button></div>';
       });
       chcH+='<button class="bsm" onclick="gather();eScData.steps['+i+'].choices.push({text:\'\',target:null});rScEd()">+ Выбор</button></div>';
     }
@@ -447,118 +441,54 @@ function rScEd(){
       +(i>0?'<button onclick="gather();swSt('+i+',-1)">↑</button>':'')
       +(i<sc.steps.length-1?'<button onclick="gather();swSt('+i+',1)">↓</button>':'')
       +(sc.steps.length>1?'<button onclick="gather();eScData.steps.splice('+i+',1);rScEd()">✕</button>':'')
-      +'</div></div>'
-      +'<div class="sf">'
+      +'</div></div><div class="sf">'
       +'<div><label>Персонаж</label><select class="sc-ch" name="sch'+i+'"><option value="">—</option>'+chO+'</select></div>'
-      +'<div><label>Позиция</label><select class="sc-ps" name="sps'+i+'"><option value="left"'+(st.pos==='left'?' selected':'')+'>← Лево</option><option value="center"'+(st.pos==='center'?' selected':'')+'>⊙ Центр</option><option value="right"'+(st.pos==='right'?' selected':'')+'>→ Право</option></select></div>'
-      +'<div class="fw"><label>Текст</label><textarea class="sc-tx" name="stx'+i+'">'+esc(st.text)+'</textarea></div>'
-      +'</div>'
-      +'<div class="cbtog"><input type="checkbox" id="cb'+i+'" name="cb'+i+'"'+(st.hasCh?' checked':'')+' onchange="gather();eScData.steps['+i+'].hasCh=this.checked;if(this.checked&&(!eScData.steps['+i+'].choices||!eScData.steps['+i+'].choices.length))eScData.steps['+i+'].choices=[{text:\'\',target:null}];rScEd()"><label for="cb'+i+'">Показать выборы</label></div>'
+      +'<div><label>Позиция</label><select class="sc-ps" name="sps'+i+'"><option value="left"'+(st.pos==='left'?' selected':'')+'>←</option><option value="center"'+(st.pos==='center'?' selected':'')+'>⊙</option><option value="right"'+(st.pos==='right'?' selected':'')+'>→</option></select></div>'
+      +'<div class="fw"><label>Текст</label><textarea class="sc-tx" name="stx'+i+'">'+esc(st.text)+'</textarea></div></div>'
+      +'<div class="cbtog"><input type="checkbox" id="cb'+i+'" name="cb'+i+'"'+(st.hasCh?' checked':'')+' onchange="gather();eScData.steps['+i+'].hasCh=this.checked;if(this.checked&&(!eScData.steps['+i+'].choices||!eScData.steps['+i+'].choices.length))eScData.steps['+i+'].choices=[{text:\'\',target:null}];rScEd()"><label for="cb'+i+'">Выборы</label></div>'
       +chcH+'</div>';
   });
   var nxO='';allSc.forEach(function(s){nxO+='<option value="'+s.id+'"'+(sc.next===s.id?' selected':'')+'>'+esc(s.name)+'</option>'});
   var bfTypeVal='';if(sc.bossFight)bfTypeVal='fnf';else if(sc.utBoss)bfTypeVal='ut';
-
-  var html='<div class="fg"><label>Название сцены</label><input id="sce-name" name="sce-name" value="'+esc(sc.name)+'"></div>'
-    +'<div class="fg"><label>Фон</label><select id="sce-bg" name="sce-bg"><option value="">— Без фона —</option>'+bgO+'</select></div>'
-    +'<div class="fg"><label>Шаги диалога</label><div class="steps">'+stH+'</div>'
-    +'<button class="bsm" onclick="gather();eScData.steps.push(mkStep());rScEd()" style="margin-top:12px">+ Добавить шаг</button></div>'
-    +'<div class="fg"><label>Следующая сцена</label><select id="sce-next" name="sce-next"><option value="">— Конец —</option>'+nxO+'</select></div>'
+  var html='<div class="fg"><label>Название</label><input id="sce-name" name="sce-name" value="'+esc(sc.name)+'"></div>'
+    +'<div class="fg"><label>Фон</label><select id="sce-bg" name="sce-bg"><option value="">—</option>'+bgO+'</select></div>'
+    +'<div class="fg"><label>Шаги</label><div class="steps">'+stH+'</div><button class="bsm" onclick="gather();eScData.steps.push(mkStep());rScEd()" style="margin-top:12px">+ Шаг</button></div>'
+    +'<div class="fg"><label>Далее</label><select id="sce-next" name="sce-next"><option value="">— Конец —</option>'+nxO+'</select></div>'
     +'<div class="bfsec"><h4>⚔️ Босс-файт</h4>'
-    +'<div class="fg"><label>Тип боя</label><select id="sce-bftype" name="sce-bftype">'
-    +'<option value=""'+(bfTypeVal===''?' selected':'')+'>Нет</option>'
-    +'<option value="fnf"'+(bfTypeVal==='fnf'?' selected':'')+'>🎵 FNF (ритм)</option>'
-    +'<option value="ut"'+(bfTypeVal==='ut'?' selected':'')+'>💀 Undertale</option>'
-    +'</select></div>'
+    +'<div class="fg"><label>Тип</label><select id="sce-bftype" name="sce-bftype"><option value=""'+(bfTypeVal===''?' selected':'')+'>Нет</option><option value="fnf"'+(bfTypeVal==='fnf'?' selected':'')+'>🎵 FNF</option><option value="ut"'+(bfTypeVal==='ut'?' selected':'')+'>💀 Undertale</option></select></div>'
     +'<div class="sf" style="margin-top:10px">'
     +'<div><label>Противник</label><select id="sce-bfchar" name="sce-bfchar"><option value="">—</option>'+chOpts+'</select></div>'
-    +'<div><label>Название / Описание</label><input id="sce-bfsong" name="sce-bfsong" value="'+esc(sc.bfSongName)+'"></div>'
-    +'<div><label>BPM (FNF)</label><input type="number" id="sce-bfbpm" name="sce-bfbpm" value="'+(sc.bfBpm||140)+'" min="60" max="300"></div>'
-    +'<div><label>Длительность (сек)</label><input type="number" id="sce-bfdur" name="sce-bfdur" value="'+(sc.bfDur||60)+'" min="15" max="300"></div>'
-    +'<div><label>Сложность (UT)</label><select id="sce-utdiff" name="sce-utdiff">'
-    +'<option value="1"'+((sc.utDiff||2)===1?' selected':'')+'>Легко</option>'
-    +'<option value="2"'+((sc.utDiff||2)===2?' selected':'')+'>Средне</option>'
-    +'<option value="3"'+((sc.utDiff||2)===3?' selected':'')+'>Сложно</option>'
-    +'</select></div>'
-    +'<div><label>HP босса (UT)</label><input type="number" id="sce-uthp" name="sce-uthp" value="'+(sc.utBossHp||500)+'" min="100" max="9999"></div>'
+    +'<div><label>Описание</label><input id="sce-bfsong" name="sce-bfsong" value="'+esc(sc.bfSongName)+'"></div>'
+    +'<div><label>BPM</label><input type="number" id="sce-bfbpm" name="sce-bfbpm" value="'+(sc.bfBpm||140)+'" min="60" max="300"></div>'
+    +'<div><label>Длина(с)</label><input type="number" id="sce-bfdur" name="sce-bfdur" value="'+(sc.bfDur||60)+'" min="15" max="300"></div>'
+    +'<div><label>Сложность UT</label><select id="sce-utdiff" name="sce-utdiff"><option value="1"'+((sc.utDiff||2)===1?' selected':'')+'>Легко</option><option value="2"'+((sc.utDiff||2)===2?' selected':'')+'>Средне</option><option value="3"'+((sc.utDiff||2)===3?' selected':'')+'>Сложно</option></select></div>'
+    +'<div><label>HP босса UT</label><input type="number" id="sce-uthp" name="sce-uthp" value="'+(sc.utBossHp||500)+'" min="100" max="9999"></div>'
     +'</div>'
-    +'<div class="fg" style="margin-top:10px"><label>Музыка (MP3/OGG)</label><label class="fbtn">📁 Загрузить<input type="file" accept="audio/*" style="display:none" onchange="ulAud(this)"></label><div id="bf-ast"></div></div>'
-    +'</div>'
-    +'<div class="brow" style="margin-top:20px">'
-    +'<button class="bp" onclick="saveSc()">💾 Сохранить</button>'
+    +'<div class="fg" style="margin-top:10px"><label>Музыка</label><label class="fbtn">📁<input type="file" accept="audio/*" style="display:none" onchange="ulAud(this)"></label><div id="bf-ast"></div></div></div>'
+    +'<div class="brow" style="margin-top:20px"><button class="bp" onclick="saveSc()">💾 Сохранить</button>'
     +(editId?'<button class="bd" onclick="delSc()">🗑 Удалить</button>':'')
-    +'<button class="bs" onclick="hideM(\'M-sc\')">Отмена</button>'
-    +'</div>';
+    +'<button class="bs" onclick="hideM(\'M-sc\')">Отмена</button></div>';
   $('sc-ed').innerHTML=html;
 }
-
 function swSt(i,d){var s=eScData.steps;var t=s[i];s[i]=s[i+d];s[i+d]=t;rScEd()}
-
-function saveSc(){
-  gather();var sc=eScData;sc.name=sc.name||'Без названия';
-  sc.steps.forEach(function(s){if(!s.hasCh)s.choices=[]});
-  if(editId){for(var i=0;i<D.scenes.length;i++){if(D.scenes[i].id===editId){D.scenes[i]=sc;break}}}
-  else{D.scenes.push(sc);if(!D.start)D.start=sc.id}
-  save().then(function(){hideM('M-sc');renderTab();toast('Сцена сохранена!')});
-}
-
-function delSc(){
-  if(!confirm('Удалить сцену?'))return;
-  if(editId)fetch('/api/audio/'+editId,{method:'DELETE'}).catch(function(){});
-  D.scenes=D.scenes.filter(function(s){return s.id!==editId});
-  if(D.start===editId)D.start=D.scenes.length?D.scenes[0].id:null;
-  save().then(function(){hideM('M-sc');renderTab();toast('Сцена удалена')});
-}
-
-function rSettings(c){
-  var scO='';D.scenes.forEach(function(s){scO+='<option value="'+s.id+'"'+(D.start===s.id?' selected':'')+'>'+esc(s.name)+'</option>'});
-  c.innerHTML='<div class="setsec"><h3>✏️ Название игры</h3><div class="fg"><label>Заголовок</label><input id="st-t" name="st-t" value="'+esc(D.title)+'" onchange="D.title=this.value;save().then(function(){updateMenu();toast(\'Сохранено!\')})"></div></div>'
-    +'<div class="setsec"><h3>⭐ Начальная сцена</h3><div class="fg"><label>Сцена</label><select id="st-s" name="st-s" onchange="D.start=this.value||null;save().then(function(){updateMenu();toast(\'Сохранено!\')})"><option value="">— Не выбрана —</option>'+scO+'</select></div></div>'
-    +'<div class="setsec"><h3>💾 Импорт / Экспорт</h3><div class="brow"><button class="bs" onclick="expD()">📤 Экспорт</button><label class="bs" style="cursor:pointer">📥 Импорт<input type="file" accept=".json" name="imp" style="display:none" onchange="impD(this)"></label></div></div>'
-    +'<div class="setsec"><h3>⚠️ Опасная зона</h3><button class="bd" onclick="clearAll()">🗑 Удалить всё</button></div>';
-}
-
+function saveSc(){gather();var sc=eScData;sc.name=sc.name||'?';sc.steps.forEach(function(s){if(!s.hasCh)s.choices=[]});if(editId){for(var i=0;i<D.scenes.length;i++){if(D.scenes[i].id===editId){D.scenes[i]=sc;break}}}else{D.scenes.push(sc);if(!D.start)D.start=sc.id}save().then(function(){hideM('M-sc');renderTab();toast('OK')})}
+function delSc(){if(!confirm('?'))return;if(editId)fetch('/api/audio/'+editId,{method:'DELETE'}).catch(function(){});D.scenes=D.scenes.filter(function(s){return s.id!==editId});if(D.start===editId)D.start=D.scenes.length?D.scenes[0].id:null;save().then(function(){hideM('M-sc');renderTab()})}
+function rSettings(c){var scO='';D.scenes.forEach(function(s){scO+='<option value="'+s.id+'"'+(D.start===s.id?' selected':'')+'>'+esc(s.name)+'</option>'});c.innerHTML='<div class="setsec"><h3>✏️ Название</h3><div class="fg"><input id="st-t" value="'+esc(D.title)+'" onchange="D.title=this.value;save().then(function(){updateMenu();toast(\'OK\')})"></div></div><div class="setsec"><h3>⭐ Начальная</h3><div class="fg"><select id="st-s" onchange="D.start=this.value||null;save().then(function(){updateMenu();toast(\'OK\')})"><option value="">—</option>'+scO+'</select></div></div><div class="setsec"><h3>💾</h3><div class="brow"><button class="bs" onclick="expD()">📤</button><label class="bs" style="cursor:pointer">📥<input type="file" accept=".json" style="display:none" onchange="impD(this)"></label></div></div><div class="setsec"><button class="bd" onclick="clearAll()">🗑 Всё</button></div>'}
 function expD(){var b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='novel.json';a.click()}
-function impD(inp){if(!inp.files[0])return;inp.files[0].text().then(function(t){try{var d=JSON.parse(t);if(d.scenes){D=d;save().then(function(){renderTab();updateMenu();toast('Импорт завершён!')})}}catch(e){toast('Ошибка формата!',1)}})}
-function clearAll(){if(!confirm('Удалить ВСЕ данные? Это необратимо!'))return;D={title:'Я НЕ ПРИДУМАЛ',bgs:[],chars:[],scenes:[],start:null};save().then(function(){renderTab();updateMenu();toast('Все данные удалены')})}
+function impD(inp){if(!inp.files[0])return;inp.files[0].text().then(function(t){try{var d=JSON.parse(t);if(d.scenes){D=d;save().then(function(){renderTab();updateMenu();toast('OK')})}}catch(e){toast('!',1)}})}
+function clearAll(){if(!confirm('ВСЁ?'))return;D={title:'Я НЕ ПРИДУМАЛ',bgs:[],chars:[],scenes:[],start:null};save().then(function(){renderTab();updateMenu()})}
 
-/* ═══ NOVEL ENGINE ═══ */
+/* ═══ NOVEL ═══ */
 function startGame(){
   if(!isAdmin&&Date.now()<TARGET){showWaitRoom();return}
-  loadData().then(function(ok){
-    if(!ok){toast('Ошибка загрузки!',1);return}
-    updateMenu();var ss=findScene(D.start);
-    if(!ss||!ss.steps||!ss.steps.length){toast('Нет данных для игры!',1);return}
-    scr('S-game');$('g-end').classList.remove('on');$('g-choices').classList.remove('on');
-    $('g-char').style.display='none';$('g-name').textContent='';$('g-txt').textContent='';
-    gameLoad(D.start);
-  });
+  loadData().then(function(ok){if(!ok){toast('!',1);return}updateMenu();var ss=findScene(D.start);if(!ss||!ss.steps||!ss.steps.length){toast('Пусто!',1);return}scr('S-game');$('g-end').classList.remove('on');$('g-choices').classList.remove('on');$('g-char').style.display='none';$('g-name').textContent='';$('g-txt').textContent='';gameLoad(D.start)})
 }
 function findScene(id){for(var i=0;i<D.scenes.length;i++)if(D.scenes[i].id===id)return D.scenes[i];return null}
 function findChar(id){for(var i=0;i<D.chars.length;i++)if(D.chars[i].id===id)return D.chars[i];return null}
 function findBg(id){for(var i=0;i<D.bgs.length;i++)if(D.bgs[i].id===id)return D.bgs[i];return null}
-function gameLoad(sid){
-  var sc=findScene(sid);if(!sc){gameEnd();return}
-  if(!sc.steps||!sc.steps.length){gameTrans(sc);return}
-  G.sid=sid;G.step=0;
-  var bg=findBg(sc.bgId);var el=$('g-bg');
-  if(bg){el.style.backgroundImage='url('+bg.data+')'}else{el.style.backgroundImage='none';el.style.backgroundColor='#1e1e3e'}
-  gameShow();
-}
-function gameTrans(sc){
-  if(sc&&sc.bossFight){bfStart(sc)}
-  else if(sc&&sc.utBoss){utStart(sc)}
-  else if(sc&&sc.next){gameLoad(sc.next)}
-  else{gameEnd()}
-}
-function gameShow(){
-  var sc=findScene(G.sid);if(!sc||G.step>=sc.steps.length){gameTrans(sc);return}
-  var st=sc.steps[G.step];var cel=$('g-char');
-  if(st.chId){var ch=findChar(st.chId);if(ch){cel.src=ch.data;cel.className=st.pos==='left'?'vis pl':st.pos==='right'?'vis pr':'vis pc';cel.style.display='block';$('g-name').textContent=ch.name}else{cel.style.display='none';$('g-name').textContent=''}}
-  else{cel.style.display='none';$('g-name').textContent=''}
-  gameType(st.text||'...');
-  $('g-ind').style.display=(st.hasCh&&st.choices&&st.choices.length)?'none':'block';
-}
+function gameLoad(sid){var sc=findScene(sid);if(!sc){gameEnd();return}if(!sc.steps||!sc.steps.length){gameTrans(sc);return}G.sid=sid;G.step=0;var bg=findBg(sc.bgId);var el=$('g-bg');if(bg){el.style.backgroundImage='url('+bg.data+')'}else{el.style.backgroundImage='none';el.style.backgroundColor='#1e1e3e'}gameShow()}
+function gameTrans(sc){if(sc&&sc.bossFight){bfStart(sc)}else if(sc&&sc.utBoss){utStart(sc)}else if(sc&&sc.next){gameLoad(sc.next)}else{gameEnd()}}
+function gameShow(){var sc=findScene(G.sid);if(!sc||G.step>=sc.steps.length){gameTrans(sc);return}var st=sc.steps[G.step];var cel=$('g-char');if(st.chId){var ch=findChar(st.chId);if(ch){cel.src=ch.data;cel.className=st.pos==='left'?'vis pl':st.pos==='right'?'vis pr':'vis pc';cel.style.display='block';$('g-name').textContent=ch.name}else{cel.style.display='none';$('g-name').textContent=''}}else{cel.style.display='none';$('g-name').textContent=''}gameType(st.text||'...');$('g-ind').style.display=(st.hasCh&&st.choices&&st.choices.length)?'none':'block'}
 function gameType(t){stopTyping();G.full=t;G.typing=true;var el=$('g-txt');var i=0;el.textContent='';G.timer=setInterval(function(){if(i<t.length){el.textContent+=t.charAt(i);i++}else{stopTyping();gameAfter()}},30)}
 function stopTyping(){if(G.timer){clearInterval(G.timer);G.timer=null}G.typing=false}
 function gameAfter(){var sc=findScene(G.sid);if(!sc)return;var st=sc.steps[G.step];if(st&&st.hasCh&&st.choices&&st.choices.length){var c=$('g-choices');var h='';for(var i=0;i<st.choices.length;i++)h+='<button class="chb" onclick="gamePick('+i+')">'+esc(st.choices[i].text||'Вариант '+(i+1))+'</button>';c.innerHTML=h;c.classList.add('on')}}
@@ -568,179 +498,89 @@ function gameEnd(){stopTyping();$('g-end').classList.add('on')}
 
 /* ═══ BOSS FIGHT (FNF) ═══ */
 var BF={active:false,audio:null,actx:null,raf:null,hp:50,score:0,combo:0,maxCombo:0,hits:0,misses:0,perfects:0,notes:[],noteIdx:0,startTime:0,songDur:0,sceneData:null,canvas:null,ctx:null,laneColors:['#c24b99','#00ffff','#12fa05','#f9393f'],laneW:0,hitY:0,speed:400,pressed:[false,false,false,false],hitAnims:[[],[],[],[]]};
-
 function bfStop(){BF.active=false;if(BF.raf){cancelAnimationFrame(BF.raf);BF.raf=null}if(BF.audio){BF.audio.pause();BF.audio=null}if(BF.actx){try{BF.actx.close()}catch(e){}BF.actx=null}}
-
 function bfStart(sd){
   bfStop();BF.sceneData=sd;BF.hp=50;BF.score=0;BF.combo=0;BF.maxCombo=0;BF.hits=0;BF.misses=0;BF.perfects=0;BF.noteIdx=0;
   BF.pressed=[false,false,false,false];BF.hitAnims=[[],[],[],[]];
-  var bpm=sd.bfBpm||140;var dur=sd.bfDur||60;BF.songDur=dur*1000;
-  BF.speed=Math.min(200+bpm*1.5,650);
-  BF.notes=bfGenBeatmap(bpm,dur);
+  var bpm=sd.bfBpm||140;var dur=sd.bfDur||60;BF.songDur=dur*1000;BF.speed=Math.min(200+bpm*1.5,650);BF.notes=bfGenBeatmap(bpm,dur);
   var ch=sd.bfChar?findChar(sd.bfChar):null;
   if(ch){$('bf-opp-img').src=ch.data;$('bf-opp-img').style.display='block';$('bf-opp-name').textContent=ch.name}
   else{$('bf-opp-img').style.display='none';$('bf-opp-name').textContent='???'}
   $('bf-song-name').textContent='♪ '+(sd.bfSongName||'Unknown');
   scr('S-boss');$('bf-result').classList.remove('on');$('bf-hfill').style.width='50%';$('bf-score-txt').textContent='0';
   requestAnimationFrame(function(){requestAnimationFrame(function(){
-    bfSetupCanvas();
-    bfLoadAudio(sd.id,function(has){
-      bfCountdown(function(){
-        if(has&&BF.audio){BF.audio.currentTime=0;BF.audio.play().catch(function(){})}
-        else{BF.actx=new(window.AudioContext||window.webkitAudioContext)();bfGenMusic(BF.actx,bpm,dur)}
-        BF.startTime=performance.now();BF.active=true;BF.raf=requestAnimationFrame(bfLoop);
-      });
-    });
+    bfSetupCanvas();bfLoadAudio(sd.id,function(has){bfCountdown(function(){
+      if(has&&BF.audio){BF.audio.currentTime=0;BF.audio.play().catch(function(){})}
+      else{BF.actx=new(window.AudioContext||window.webkitAudioContext)();bfGenMusic(BF.actx,bpm,dur)}
+      BF.startTime=performance.now();BF.active=true;BF.raf=requestAnimationFrame(bfLoop);
+    })});
   })});
 }
-
-function bfSetupCanvas(){
-  BF.canvas=$('bf-canvas');var rect=BF.canvas.parentElement.getBoundingClientRect();
-  BF.canvas.width=Math.max(rect.width*2,100);BF.canvas.height=Math.max(rect.height*2,100);
-  BF.canvas.style.width=rect.width+'px';BF.canvas.style.height=rect.height+'px';
-  BF.ctx=BF.canvas.getContext('2d');BF.ctx.scale(2,2);
-  BF.laneW=rect.width/4;BF.hitY=rect.height-100;
-}
-
-function bfLoadAudio(id,cb){
-  fetch('/api/audio-check/'+id).then(function(r){return r.json()}).then(function(d){
-    if(d.exists){BF.audio=new Audio('/api/audio/'+id);BF.audio.preload='auto';BF.audio.volume=.7;var ok=false;BF.audio.oncanplaythrough=function(){if(!ok){ok=true;cb(true)}};BF.audio.onerror=function(){if(!ok){ok=true;cb(false)}};BF.audio.load();setTimeout(function(){if(!ok){ok=true;cb(BF.audio&&BF.audio.readyState>=2)}},5000)}
-    else cb(false)
-  }).catch(function(){cb(false)})
-}
-
+function bfSetupCanvas(){BF.canvas=$('bf-canvas');var rect=BF.canvas.parentElement.getBoundingClientRect();BF.canvas.width=Math.max(rect.width*2,100);BF.canvas.height=Math.max(rect.height*2,100);BF.canvas.style.width=rect.width+'px';BF.canvas.style.height=rect.height+'px';BF.ctx=BF.canvas.getContext('2d');BF.ctx.scale(2,2);BF.laneW=rect.width/4;BF.hitY=rect.height-100}
+function bfLoadAudio(id,cb){fetch('/api/audio-check/'+id).then(function(r){return r.json()}).then(function(d){if(d.exists){BF.audio=new Audio('/api/audio/'+id);BF.audio.preload='auto';BF.audio.volume=.7;var ok=false;BF.audio.oncanplaythrough=function(){if(!ok){ok=true;cb(true)}};BF.audio.onerror=function(){if(!ok){ok=true;cb(false)}};BF.audio.load();setTimeout(function(){if(!ok){ok=true;cb(BF.audio&&BF.audio.readyState>=2)}},5000)}else cb(false)}).catch(function(){cb(false)})}
 function bfCountdown(cb){var el=$('bf-countdown');el.classList.add('on');var n=['3','2','1','♪'];var i=0;el.textContent=n[0];var iv=setInterval(function(){i++;if(i<n.length)el.textContent=n[i];else{clearInterval(iv);el.classList.remove('on');cb()}},700)}
-
-function bfGenBeatmap(bpm,dur){
-  var beat=60/bpm;var notes=[];var t=beat*4;
-  var patterns=[[0,1,2,3],[3,2,1,0],[0,2,1,3],[1,3,0,2],[0,0,2,2],[1,1,3,3],[0,1,0,1],[2,3,2,3],[0,2,0,3],[1,3,1,2],[3,1,0,2],[2,0,3,1],[0,1,2,1],[3,2,1,2],[0,3,0,3],[1,2,1,2]];
-  var pi=Math.floor(Math.random()*patterns.length);var si=0;
-  while(t<dur-2){
-    var intensity=Math.min(t/(dur*0.7),1);
-    var pat=patterns[pi%patterns.length];var lane=pat[si%pat.length];
-    notes.push({time:t*1000,lane:lane,hit:false,missed:false});
-    if(intensity>0.2&&Math.random()<intensity*0.5){notes.push({time:(t+beat*0.5)*1000,lane:(lane+1+Math.floor(Math.random()*3))%4,hit:false,missed:false})}
-    if(intensity>0.5&&Math.random()<(intensity-0.5)*0.6){notes.push({time:(t+beat*0.25)*1000,lane:Math.floor(Math.random()*4),hit:false,missed:false})}
-    if(intensity>0.7&&Math.random()<0.15){notes.push({time:(t+beat*0.33)*1000,lane:(lane+2)%4,hit:false,missed:false});notes.push({time:(t+beat*0.67)*1000,lane:(lane+3)%4,hit:false,missed:false})}
-    si++;if(si%pat.length===0&&Math.random()<0.4){pi++;si=0}
-    if(Math.random()<0.15*(1-intensity))t+=beat;
-    t+=beat;
-  }
-  notes.sort(function(a,b){return a.time-b.time});return notes;
-}
-
+function bfGenBeatmap(bpm,dur){var beat=60/bpm;var notes=[];var t=beat*4;var patterns=[[0,1,2,3],[3,2,1,0],[0,2,1,3],[1,3,0,2],[0,0,2,2],[1,1,3,3],[0,1,0,1],[2,3,2,3],[0,2,0,3],[1,3,1,2],[3,1,0,2],[2,0,3,1],[0,1,2,1],[3,2,1,2],[0,3,0,3],[1,2,1,2]];var pi=Math.floor(Math.random()*patterns.length);var si=0;while(t<dur-2){var intensity=Math.min(t/(dur*0.7),1);var pat=patterns[pi%patterns.length];var lane=pat[si%pat.length];notes.push({time:t*1000,lane:lane,hit:false,missed:false});if(intensity>0.2&&Math.random()<intensity*0.5){notes.push({time:(t+beat*0.5)*1000,lane:(lane+1+Math.floor(Math.random()*3))%4,hit:false,missed:false})}if(intensity>0.5&&Math.random()<(intensity-0.5)*0.6){notes.push({time:(t+beat*0.25)*1000,lane:Math.floor(Math.random()*4),hit:false,missed:false})}if(intensity>0.7&&Math.random()<0.15){notes.push({time:(t+beat*0.33)*1000,lane:(lane+2)%4,hit:false,missed:false});notes.push({time:(t+beat*0.67)*1000,lane:(lane+3)%4,hit:false,missed:false})}si++;if(si%pat.length===0&&Math.random()<0.4){pi++;si=0}if(Math.random()<0.15*(1-intensity))t+=beat;t+=beat}notes.sort(function(a,b){return a.time-b.time});return notes}
 function bfGenMusic(actx,bpm,dur){var beat=60/bpm;var f=[261.63,293.66,329.63,349.23,392,440,493.88,523.25];var now=actx.currentTime;for(var i=0;i<BF.notes.length;i++){var n=BF.notes[i];bfTn(actx,f[(n.lane*2+i)%8],now+n.time/1000,beat*.35,'square',.06)}for(var t=0;t<dur;t+=beat)bfTn(actx,f[Math.floor(t/beat/4)%4]/2,now+t,beat*.5,'triangle',.1);for(var t=0;t<dur;t+=beat)bfDr(actx,now+t);for(var t=beat/2;t<dur;t+=beat)bfNs(actx,now+t,.02,.03)}
 function bfTn(c,f,t,d,tp,v){var o=c.createOscillator();var g=c.createGain();o.type=tp;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d+.01)}
 function bfDr(c,t){var o=c.createOscillator();var g=c.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(30,t+.1);g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+.2)}
 function bfNs(c,t,d,v){var b=c.createBuffer(1,c.sampleRate*d,c.sampleRate);var da=b.getChannelData(0);for(var i=0;i<da.length;i++)da[i]=Math.random()*2-1;var s=c.createBufferSource();s.buffer=b;var g=c.createGain();g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);var fl=c.createBiquadFilter();fl.type='highpass';fl.frequency.value=8000;s.connect(fl);fl.connect(g);g.connect(c.destination);s.start(t)}
-
-function bfLoop(){
-  if(!BF.active)return;var el=performance.now()-BF.startTime;
-  for(var i=BF.noteIdx;i<BF.notes.length;i++){var n=BF.notes[i];if(n.hit||n.missed)continue;if(el-n.time>160){n.missed=true;BF.misses++;BF.combo=0;BF.hp=Math.max(0,BF.hp-5);bfRt('MISS','#e94560')}if(n.time-el>2000)break}
-  while(BF.noteIdx<BF.notes.length&&(BF.notes[BF.noteIdx].hit||BF.notes[BF.noteIdx].missed))BF.noteIdx++;
-  $('bf-hfill').style.width=BF.hp+'%';$('bf-score-txt').textContent=Math.floor(BF.score);
-  if(BF.hp<=0){bfEnd(false);return}
-  if(el>=BF.songDur+1000){bfEnd(true);return}
-  bfRender(el);BF.raf=requestAnimationFrame(bfLoop);
-}
-
-function bfRender(el){
-  var c=BF.ctx;var w=BF.canvas.width/2;var h=BF.canvas.height/2;c.clearRect(0,0,w,h);
-  for(var i=0;i<4;i++){c.fillStyle='rgba(255,255,255,0.02)';c.fillRect(i*BF.laneW,0,BF.laneW,h);c.strokeStyle='rgba(255,255,255,0.06)';c.strokeRect(i*BF.laneW,0,BF.laneW,h)}
-  for(var i=0;i<4;i++){var cx=i*BF.laneW+BF.laneW/2;if(BF.pressed[i]){c.fillStyle=BF.laneColors[i]+'22';c.fillRect(i*BF.laneW,BF.hitY-30,BF.laneW,60)}bfAr(c,cx,BF.hitY,BF.laneW*.32,i,false,BF.pressed[i]?BF.laneColors[i]:'rgba(255,255,255,0.25)')}
-  for(var i=0;i<4;i++){for(var j=BF.hitAnims[i].length-1;j>=0;j--){var a=BF.hitAnims[i][j];var age=el-a.time;if(age>300){BF.hitAnims[i].splice(j,1);continue}c.globalAlpha=1-age/300;bfAr(c,i*BF.laneW+BF.laneW/2,BF.hitY,BF.laneW*.32*(1+age/200),i,true,a.color);c.globalAlpha=1}}
-  for(var i=0;i<BF.notes.length;i++){var n=BF.notes[i];if(n.hit||n.missed)continue;var dt=n.time-el;if(dt>2000)break;if(dt<-300)continue;var y=BF.hitY-dt/1000*BF.speed;if(y<-50||y>h+50)continue;bfAr(c,n.lane*BF.laneW+BF.laneW/2,y,BF.laneW*.32,n.lane,true,BF.laneColors[n.lane])}
-}
-
+function bfLoop(){if(!BF.active)return;var el=performance.now()-BF.startTime;for(var i=BF.noteIdx;i<BF.notes.length;i++){var n=BF.notes[i];if(n.hit||n.missed)continue;if(el-n.time>160){n.missed=true;BF.misses++;BF.combo=0;BF.hp=Math.max(0,BF.hp-5);bfRt('MISS','#e94560')}if(n.time-el>2000)break}while(BF.noteIdx<BF.notes.length&&(BF.notes[BF.noteIdx].hit||BF.notes[BF.noteIdx].missed))BF.noteIdx++;$('bf-hfill').style.width=BF.hp+'%';$('bf-score-txt').textContent=Math.floor(BF.score);if(BF.hp<=0){bfEnd(false);return}if(el>=BF.songDur+1000){bfEnd(true);return}bfRender(el);BF.raf=requestAnimationFrame(bfLoop)}
+function bfRender(el){var c=BF.ctx;var w=BF.canvas.width/2;var h=BF.canvas.height/2;c.clearRect(0,0,w,h);for(var i=0;i<4;i++){c.fillStyle='rgba(255,255,255,0.02)';c.fillRect(i*BF.laneW,0,BF.laneW,h);c.strokeStyle='rgba(255,255,255,0.06)';c.strokeRect(i*BF.laneW,0,BF.laneW,h)}for(var i=0;i<4;i++){var cx=i*BF.laneW+BF.laneW/2;if(BF.pressed[i]){c.fillStyle=BF.laneColors[i]+'22';c.fillRect(i*BF.laneW,BF.hitY-30,BF.laneW,60)}bfAr(c,cx,BF.hitY,BF.laneW*.32,i,false,BF.pressed[i]?BF.laneColors[i]:'rgba(255,255,255,0.25)')}for(var i=0;i<4;i++){for(var j=BF.hitAnims[i].length-1;j>=0;j--){var a=BF.hitAnims[i][j];var age=el-a.time;if(age>300){BF.hitAnims[i].splice(j,1);continue}c.globalAlpha=1-age/300;bfAr(c,i*BF.laneW+BF.laneW/2,BF.hitY,BF.laneW*.32*(1+age/200),i,true,a.color);c.globalAlpha=1}}for(var i=0;i<BF.notes.length;i++){var n=BF.notes[i];if(n.hit||n.missed)continue;var dt=n.time-el;if(dt>2000)break;if(dt<-300)continue;var y=BF.hitY-dt/1000*BF.speed;if(y<-50||y>h+50)continue;bfAr(c,n.lane*BF.laneW+BF.laneW/2,y,BF.laneW*.32,n.lane,true,BF.laneColors[n.lane])}}
 function bfAr(c,x,y,s,l,fill,col){c.save();c.translate(x,y);var r=[Math.PI/2,Math.PI,0,-Math.PI/2];c.rotate(r[l]);c.beginPath();c.moveTo(0,-s);c.lineTo(s*.7,s*.2);c.lineTo(s*.25,s*.2);c.lineTo(s*.25,s);c.lineTo(-s*.25,s);c.lineTo(-s*.25,s*.2);c.lineTo(-s*.7,s*.2);c.closePath();if(fill){c.fillStyle=col;c.fill();c.strokeStyle='rgba(255,255,255,.2)';c.lineWidth=1;c.stroke()}else{c.strokeStyle=col;c.lineWidth=2;c.stroke()}c.restore()}
-
-function bfHit(lane){
-  if(!BF.active)return;BF.pressed[lane]=true;setTimeout(function(){BF.pressed[lane]=false},100);
-  var el=performance.now()-BF.startTime;var best=null,bestDt=Infinity;
-  for(var i=0;i<BF.notes.length;i++){var n=BF.notes[i];if(n.hit||n.missed||n.lane!==lane)continue;var dt=Math.abs(el-n.time);if(dt>200)continue;if(dt<bestDt){bestDt=dt;best=n}}
-  if(!best)return;best.hit=true;BF.hits++;
-  var r,p,heal,col;
-  if(bestDt<35){r='PERFECT';p=400;heal=3;col='#ffff00';BF.perfects++}
-  else if(bestDt<75){r='GREAT';p=280;heal=2;col='#4ecca3'}
-  else if(bestDt<120){r='GOOD';p=150;heal=1;col='#39ffdc'}
-  else{r='OK';p=50;heal=0;col='#7878a0'}
-  BF.combo++;if(BF.combo>BF.maxCombo)BF.maxCombo=BF.combo;
-  BF.score+=p*(1+Math.floor(BF.combo/10)*0.15);BF.hp=Math.min(100,BF.hp+heal);
-  BF.hitAnims[lane].push({time:performance.now()-BF.startTime,color:col});
-  bfRt(r,col);if(BF.combo>0&&BF.combo%10===0)bfCb();
-}
+function bfHit(lane){if(!BF.active)return;BF.pressed[lane]=true;setTimeout(function(){BF.pressed[lane]=false},100);var el=performance.now()-BF.startTime;var best=null,bestDt=Infinity;for(var i=0;i<BF.notes.length;i++){var n=BF.notes[i];if(n.hit||n.missed||n.lane!==lane)continue;var dt=Math.abs(el-n.time);if(dt>200)continue;if(dt<bestDt){bestDt=dt;best=n}}if(!best)return;best.hit=true;BF.hits++;var r,p,heal,col;if(bestDt<35){r='PERFECT';p=400;heal=3;col='#ffff00';BF.perfects++}else if(bestDt<75){r='GREAT';p=280;heal=2;col='#4ecca3'}else if(bestDt<120){r='GOOD';p=150;heal=1;col='#39ffdc'}else{r='OK';p=50;heal=0;col='#7878a0'}BF.combo++;if(BF.combo>BF.maxCombo)BF.maxCombo=BF.combo;BF.score+=p*(1+Math.floor(BF.combo/10)*0.15);BF.hp=Math.min(100,BF.hp+heal);BF.hitAnims[lane].push({time:performance.now()-BF.startTime,color:col});bfRt(r,col);if(BF.combo>0&&BF.combo%10===0)bfCb()}
 function bfRt(t,c){var e=$('bf-rating-txt');e.textContent=t;e.style.color=c;e.classList.remove('show');void e.offsetWidth;e.classList.add('show');setTimeout(function(){e.classList.remove('show')},600)}
 function bfCb(){var e=$('bf-combo-txt');e.textContent=BF.combo+'x';e.classList.remove('show');void e.offsetWidth;e.classList.add('show');setTimeout(function(){e.classList.remove('show')},800)}
 function bfEnd(won){bfStop();$('bf-result').classList.add('on');$('bf-res-title').textContent=won?'ПОБЕДА!':'ПОРАЖЕНИЕ';$('bf-res-title').className=won?'win':'lose';$('bf-res-stats').innerHTML='Счёт: '+Math.floor(BF.score)+'<br>Комбо: '+BF.maxCombo+'x<br>Perfect: '+BF.perfects+'<br>Промахи: '+BF.misses;var btn=$('bf-res-btn');var sc=BF.sceneData;if(won){btn.textContent='Продолжить';btn.onclick=function(){$('bf-result').classList.remove('on');if(sc&&sc.next){scr('S-game');gameLoad(sc.next)}else{scr('S-game');gameEnd()}}}else{btn.textContent='Ещё раз';btn.onclick=function(){$('bf-result').classList.remove('on');bfStart(sc)}}}
 
-document.addEventListener('keydown',function(e){if(BF.active){if(e.key==='ArrowLeft'||e.key==='a')bfHit(0);else if(e.key==='ArrowDown'||e.key==='s')bfHit(1);else if(e.key==='ArrowUp'||e.key==='w')bfHit(2);else if(e.key==='ArrowRight'||e.key==='d')bfHit(3)}});
-
-/* ═══════════════════════════════════════════
-   UNDERTALE BOSS FIGHT ENGINE v2
-   - Blue bones (stay still to avoid)
-   - Orange bones (keep moving to avoid)
-   - Sans helper flying around
-   - Better attack patterns with guaranteed gaps
-   - Dialogue bubble near boss
-   - Screen shake on hit
-   ═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   UNDERTALE BOSS v2 — FIXED SANS + FIXED WASD
+   Blue bones, Orange bones, Sans helper, screen shake
+   ═══════════════════════════════════════════════════ */
 var UT={
   active:false,raf:null,audio:null,
-  phase:'player',
-  sceneData:null,nextScene:null,
-  // player
-  px:0,py:0,pSpeed:3.5,hp:92,maxHp:92,inv:0,
-  prevPx:0,prevPy:0, // for blue/orange bone check
-  isMoving:false,
-  // boss
+  phase:'player',sceneData:null,
+  px:0,py:0,prevPx:0,prevPy:0,pSpeed:3.5,
+  hp:92,maxHp:92,inv:0,isMoving:false,
   bossHp:500,bossMaxHp:500,bossName:'',mercy:0,
-  // box
   boxW:200,boxH:200,
-  // attacks
   projectiles:[],bones:[],beams:[],
-  attackTimer:0,attackDur:6000,attackIdx:0,turnCount:0,
-  spawnAcc:0, // spawn accumulator
-  // fight bar
+  attackTimer:0,attackDur:6000,attackIdx:0,turnCount:0,spawnAcc:0,
   atkBarActive:false,atkCursorX:0,atkCursorDir:1,
-  // keys
   keys:{},
-  // dialogue
   dialogues:[],dlgIdx:0,
-  // diff
   diff:2,
-  // sans helper
-  sans:{x:0,y:0,tx:0,ty:0,moveTimer:0,throwTimer:0,rocks:[]},
-  // screen shake
-  shakeTime:0,shakeX:0,shakeY:0,
-  // boss hit flash
-  bossFlash:0
+  // sans
+  sans:{x:0,y:0,tx:0,ty:0,moveTimer:0,throwTimer:0,parentW:0,parentH:0},
+  // effects
+  shakeTime:0,bossFlash:0
 };
 
 var UT_DIALOGUES=[
   ["Ты не пройдёшь!","Готовься к бою!"],
   ["Хмм... Интересно...","Попробуй ещё!"],
   ["Ты неплох...","Но я сильнее!"],
-  ["Я чувствую твою решимость...","Не сдавайся!"],
-  ["Это становится серьёзным..."],
+  ["Я чувствую решимость...","Не сдавайся!"],
+  ["Это серьёзно..."],
   ["*тяжело дышит*","Ты... силён..."],
   ["Нет... Я не проиграю!"],
   ["..."]
 ];
+
+var UT_SANS_PHRASES=['хех.','получай!','без шансов.','скучно...','*зевает*','не-а.','слишком медленно.','пфф.','хехехе...','мой ход.'];
 
 function utStop(){
   UT.active=false;
   if(UT.raf){cancelAnimationFrame(UT.raf);UT.raf=null}
   if(UT.audio){UT.audio.pause();UT.audio=null}
   UT.keys={};
-  // reset shake
   var mid=$('ut-mid');if(mid)mid.style.transform='';
-  // reset boss flash
   var img=$('ut-opp-img');if(img)img.style.filter='';
+  var sansEl=$('ut-sans');if(sansEl)sansEl.style.display='none';
 }
 
 function utStart(sd){
   utStop();
-  UT.sceneData=sd;UT.nextScene=sd.next;
+  UT.sceneData=sd;
   UT.diff=sd.utDiff||2;
   UT.maxHp=92;UT.hp=92;
   UT.bossMaxHp=sd.utBossHp||500;UT.bossHp=UT.bossMaxHp;
@@ -749,12 +589,8 @@ function utStart(sd){
   UT.phase='dialogue';UT.dlgIdx=0;
   UT.atkBarActive=false;UT.inv=0;
   UT.isMoving=false;UT.spawnAcc=0;
-  UT.shakeTime=0;UT.shakeX=0;UT.shakeY=0;
-  UT.bossFlash=0;
+  UT.shakeTime=0;UT.bossFlash=0;
   UT.pSpeed=[3,3.5,4.2][UT.diff-1];
-
-  // sans init
-  UT.sans={x:50,y:50,tx:100,ty:60,moveTimer:0,throwTimer:0,rocks:[]};
 
   var ch=sd.bfChar?findChar(sd.bfChar):null;
   if(ch){$('ut-opp-img').src=ch.data;$('ut-opp-img').style.display='block';$('ut-opp-name').textContent=ch.name;UT.bossName=ch.name}
@@ -764,12 +600,16 @@ function utStart(sd){
   $('ut-result').classList.remove('on');
   $('ut-sub').classList.remove('show');
   $('ut-atk-bar').classList.remove('show');
-  // show sans
-  var sansEl=$('ut-sans');if(sansEl)sansEl.style.display='block';
 
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     utSetupBox();
     utUpdateHp();
+    // init sans position relative to #S-ut
+    var utEl=$('S-ut');
+    var utRect=utEl.getBoundingClientRect();
+    UT.sans={x:utRect.width*0.08,y:utRect.height*0.45,tx:utRect.width*0.15,ty:utRect.height*0.35,moveTimer:0,throwTimer:3000,parentW:utRect.width,parentH:utRect.height};
+    var sansEl=$('ut-sans');
+    if(sansEl){sansEl.style.display='block';sansEl.style.left=UT.sans.x+'px';sansEl.style.top=UT.sans.y+'px'}
     utShowDialogue(UT_DIALOGUES[0]);
     utLoadAudio(sd.id);
     UT.active=true;
@@ -781,21 +621,13 @@ function utSetupBox(){
   var mid=$('ut-mid');var rect=mid.getBoundingClientRect();
   var size=Math.min(rect.width*0.6,rect.height*0.85,300);
   UT.boxW=size;UT.boxH=size;
-  var box=$('ut-box');
-  box.style.width=size+'px';box.style.height=size+'px';
+  var box=$('ut-box');box.style.width=size+'px';box.style.height=size+'px';
   UT.px=size/2-9;UT.py=size/2-9;
   UT.prevPx=UT.px;UT.prevPy=UT.py;
-  var heart=$('ut-heart');heart.style.left=UT.px+'px';heart.style.top=UT.py+'px';
-  // init sans position
-  UT.sans.x=rect.width*0.1;UT.sans.y=rect.height*0.3;
-  UT.sans.tx=rect.width*0.2;UT.sans.ty=rect.height*0.5;
+  $('ut-heart').style.left=UT.px+'px';$('ut-heart').style.top=UT.py+'px';
 }
 
-function utLoadAudio(id){
-  fetch('/api/audio-check/'+id).then(function(r){return r.json()}).then(function(d){
-    if(d.exists){UT.audio=new Audio('/api/audio/'+id);UT.audio.loop=true;UT.audio.volume=.5;UT.audio.play().catch(function(){})}
-  }).catch(function(){});
-}
+function utLoadAudio(id){fetch('/api/audio-check/'+id).then(function(r){return r.json()}).then(function(d){if(d.exists){UT.audio=new Audio('/api/audio/'+id);UT.audio.loop=true;UT.audio.volume=.5;UT.audio.play().catch(function(){})}}).catch(function(){})}
 
 function utUpdateHp(){
   var pct=Math.max(0,UT.hp/UT.maxHp*100);
@@ -805,226 +637,135 @@ function utUpdateHp(){
 }
 
 function utShowDialogue(lines){
-  UT.phase='dialogue';
-  UT.dialogues=lines||['...'];UT.dlgIdx=0;
+  UT.phase='dialogue';UT.dialogues=lines||['...'];UT.dlgIdx=0;
   var el=$('ut-dlg');el.textContent=UT.dialogues[0];el.classList.add('show');
   utHideActions();
 }
-
-function utHideActions(){var acts=document.querySelectorAll('.ut-act');for(var i=0;i<acts.length;i++)acts[i].style.opacity='.4';acts[0]&&(acts[0].style.pointerEvents='none');for(var i=0;i<acts.length;i++)acts[i].style.pointerEvents='none'}
+function utHideActions(){var acts=document.querySelectorAll('.ut-act');for(var i=0;i<acts.length;i++){acts[i].style.opacity='.4';acts[i].style.pointerEvents='none'}}
 function utShowActions(){var acts=document.querySelectorAll('.ut-act');for(var i=0;i<acts.length;i++){acts[i].style.opacity='1';acts[i].style.pointerEvents='auto'}}
 
 function utAdvanceDialogue(){
   UT.dlgIdx++;
-  if(UT.dlgIdx>=UT.dialogues.length){
-    $('ut-dlg').classList.remove('show');
-    if(UT.phase==='dialogue'){UT.phase='player';utShowActions()}
-  }else{
-    $('ut-dlg').textContent=UT.dialogues[UT.dlgIdx];
-  }
+  if(UT.dlgIdx>=UT.dialogues.length){$('ut-dlg').classList.remove('show');if(UT.phase==='dialogue'){UT.phase='player';utShowActions()}}
+  else{$('ut-dlg').textContent=UT.dialogues[UT.dlgIdx]}
 }
 
 function utAction(type){
   if(UT.phase!=='player')return;
-  $('ut-sub').classList.remove('show');
-  $('ut-atk-bar').classList.remove('show');
-
+  $('ut-sub').classList.remove('show');$('ut-atk-bar').classList.remove('show');
   if(type==='fight'){
-    utHideActions();
-    UT.atkBarActive=true;UT.atkCursorX=0;UT.atkCursorDir=1;
+    utHideActions();UT.atkBarActive=true;UT.atkCursorX=0;UT.atkCursorDir=1;
     $('ut-atk-bar').classList.add('show');
-    var bar=$('ut-atk-bar');var bw=bar.offsetWidth;
-    var zoneW=bw*0.15;var zoneX=(bw-zoneW)/2;
+    var bar=$('ut-atk-bar');var bw=bar.offsetWidth;var zoneW=bw*0.15;var zoneX=(bw-zoneW)/2;
     $('ut-atk-zone').style.left=zoneX+'px';$('ut-atk-zone').style.width=zoneW+'px';
-  }
-  else if(type==='act'){
+  }else if(type==='act'){
     $('ut-sub').classList.add('show');
     $('ut-sub').innerHTML='<button class="ut-sub-btn" onclick="utDoAct(\'check\')">* Check</button><button class="ut-sub-btn" onclick="utDoAct(\'talk\')">* Talk</button><button class="ut-sub-btn" onclick="utDoAct(\'flirt\')">* Flirt</button>';
-  }
-  else if(type==='item'){
+  }else if(type==='item'){
     $('ut-sub').classList.add('show');
-    $('ut-sub').innerHTML='<button class="ut-sub-btn" onclick="utDoItem()">* Пирог (+40 HP)</button>';
-  }
-  else if(type==='mercy'){
+    $('ut-sub').innerHTML='<button class="ut-sub-btn" onclick="utDoItem()">* Пирог (+40HP)</button>';
+  }else if(type==='mercy'){
     $('ut-sub').classList.add('show');
-    var spCol=UT.mercy>=100?'color:#ff0;font-weight:900':'';
-    $('ut-sub').innerHTML='<button class="ut-sub-btn" onclick="utDoMercy(\'spare\')" style="'+spCol+'">* Spare'+(UT.mercy>=100?' ✨':'')+'</button><button class="ut-sub-btn" onclick="utDoMercy(\'flee\')">* Flee</button>';
+    var sp=UT.mercy>=100?'color:#ff0;font-weight:900':'';
+    $('ut-sub').innerHTML='<button class="ut-sub-btn" onclick="utDoMercy(\'spare\')" style="'+sp+'">* Spare'+(UT.mercy>=100?' ✨':'')+'</button><button class="ut-sub-btn" onclick="utDoMercy(\'flee\')">* Flee</button>';
   }
 }
 
 function utDoFightHit(){
-  if(!UT.atkBarActive)return;
-  UT.atkBarActive=false;
+  if(!UT.atkBarActive)return;UT.atkBarActive=false;
   $('ut-atk-bar').classList.remove('show');
   var bar=$('ut-atk-bar');var bw=bar.offsetWidth||300;
-  var zoneW=bw*0.15;var zoneX=(bw-zoneW)/2;
-  var cx=UT.atkCursorX;
-  var dist=Math.abs(cx-(zoneX+zoneW/2));
-  var maxDist=bw/2;
+  var zoneW=bw*0.15;var zoneX=(bw-zoneW)/2;var cx=UT.atkCursorX;
+  var dist=Math.abs(cx-(zoneX+zoneW/2));var maxDist=bw/2;
   var mult=Math.max(0,1-dist/maxDist);
   var baseDmg=[25,35,50][UT.diff-1];
   var dmg=Math.floor(baseDmg+baseDmg*2*mult*mult);
   if(mult>0.85)dmg=Math.floor(dmg*1.5);
-
-  UT.bossHp-=dmg;
-  utShowDmg(dmg,mult>0.85);
-  utBossFlash();
-
+  UT.bossHp-=dmg;utShowDmg(dmg,mult>0.85);utBossFlash();
   if(UT.bossHp<=0){UT.bossHp=0;setTimeout(function(){utEnd(true)},800);return}
-  setTimeout(function(){utStartAttack()},1000);
+  setTimeout(function(){if(UT.active)utStartAttack()},1000);
 }
 
-function utBossFlash(){
-  UT.bossFlash=300;
-  var img=$('ut-opp-img');
-  if(img)img.style.filter='brightness(3) saturate(0)';
-}
-
-function utShowDmg(dmg,crit){
-  var el=$('ut-dmg');
-  el.textContent=(crit?'★ ':'')+dmg;
-  el.style.color=crit?'#ff0':'#fff';
-  el.style.top='30%';el.style.left='50%';el.style.transform='translateX(-50%)';
-  el.classList.remove('show');void el.offsetWidth;el.classList.add('show');
-  setTimeout(function(){el.classList.remove('show')},800);
-}
-
-function utShowTurn(txt){
-  var el=$('ut-turn-txt');el.textContent=txt;
-  el.classList.remove('show');void el.offsetWidth;el.classList.add('show');
-  setTimeout(function(){el.classList.remove('show')},1200);
-}
+function utBossFlash(){UT.bossFlash=300;var img=$('ut-opp-img');if(img)img.style.filter='brightness(3) saturate(0)'}
+function utShowDmg(dmg,crit){var el=$('ut-dmg');el.textContent=(crit?'★ ':'')+dmg;el.style.color=crit?'#ff0':'#fff';el.style.top='30%';el.style.left='50%';el.style.transform='translateX(-50%)';el.classList.remove('show');void el.offsetWidth;el.classList.add('show');setTimeout(function(){el.classList.remove('show')},800)}
+function utShowTurn(txt){var el=$('ut-turn-txt');el.textContent=txt;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');setTimeout(function(){el.classList.remove('show')},1200)}
 
 function utDoAct(type){
   $('ut-sub').classList.remove('show');
-  if(type==='check'){
-    utShowDialogue([UT.bossName+' — ATK '+([10,15,25][UT.diff-1])+' DEF '+([5,10,15][UT.diff-1]),'HP: '+Math.ceil(UT.bossHp)+'/'+UT.bossMaxHp]);
-    UT.mercy+=5;
-  }else if(type==='talk'){
-    UT.mercy+=15;
-    utShowDialogue(['* Ты пытаешься поговорить...','* '+UT.bossName+' немного смягчается. (Mercy +15%)']);
-  }else if(type==='flirt'){
-    UT.mercy+=10;
-    utShowDialogue(['* Ты подмигиваешь...','* '+UT.bossName+' краснеет! (Mercy +10%)']);
-  }
+  if(type==='check'){utShowDialogue([UT.bossName+' — ATK '+[10,15,25][UT.diff-1]+' DEF '+[5,10,15][UT.diff-1],'HP: '+Math.ceil(UT.bossHp)+'/'+UT.bossMaxHp]);UT.mercy+=5}
+  else if(type==='talk'){UT.mercy+=15;utShowDialogue(['* Ты пытаешься поговорить...','* '+UT.bossName+' смягчается. (Mercy +15%)'])}
+  else if(type==='flirt'){UT.mercy+=10;utShowDialogue(['* Ты подмигиваешь...','* '+UT.bossName+' краснеет! (Mercy +10%)'])}
   UT.phase='dialogue';
-  var dlgLen=UT.dialogues?UT.dialogues.length:1;
-  setTimeout(function(){if(UT.active&&UT.phase==='dialogue')utStartAttack()},dlgLen*1500+500);
+  var len=UT.dialogues?UT.dialogues.length:1;
+  setTimeout(function(){if(UT.active&&UT.phase==='dialogue')utStartAttack()},len*1500+500);
 }
-
-function utDoItem(){
-  $('ut-sub').classList.remove('show');
-  UT.hp=Math.min(UT.maxHp,UT.hp+40);
-  utUpdateHp();
-  utShowDialogue(['* Ты съел пирог.','* HP восстановлены!']);
-  setTimeout(function(){if(UT.active)utStartAttack()},3500);
-}
-
+function utDoItem(){$('ut-sub').classList.remove('show');UT.hp=Math.min(UT.maxHp,UT.hp+40);utUpdateHp();utShowDialogue(['* Ты съел пирог.','* HP восстановлены!']);setTimeout(function(){if(UT.active)utStartAttack()},3500)}
 function utDoMercy(type){
   $('ut-sub').classList.remove('show');
   if(type==='spare'&&UT.mercy>=100){utEnd(true);return}
-  else if(type==='spare'){
-    utShowDialogue(['* '+UT.bossName+' не хочет останавливаться...','* (Mercy: '+Math.floor(UT.mercy)+'%)']);
-    setTimeout(function(){if(UT.active)utStartAttack()},3000);
-  }else{
-    utShowDialogue(['* Ты не можешь сбежать!']);
-    setTimeout(function(){if(UT.active)utStartAttack()},2000);
-  }
+  else if(type==='spare'){utShowDialogue(['* '+UT.bossName+' не хочет...','* (Mercy: '+Math.floor(UT.mercy)+'%)']);setTimeout(function(){if(UT.active)utStartAttack()},3000)}
+  else{utShowDialogue(['* Не сбежать!']);setTimeout(function(){if(UT.active)utStartAttack()},2000)}
 }
 
 function utStartAttack(){
-  UT.phase='attack';
-  utHideActions();
-  $('ut-dlg').classList.remove('show');
-  $('ut-sub').classList.remove('show');
-  UT.projectiles=[];UT.bones=[];UT.beams=[];
-  UT.spawnAcc=0;
+  UT.phase='attack';utHideActions();
+  $('ut-dlg').classList.remove('show');$('ut-sub').classList.remove('show');
+  UT.projectiles=[];UT.bones=[];UT.beams=[];UT.spawnAcc=0;
   var box=$('ut-box');var old=box.querySelectorAll('.ut-proj,.ut-bone,.ut-beam');
   for(var i=0;i<old.length;i++)old[i].remove();
   UT.attackTimer=performance.now();
   UT.attackDur=[5000,6500,8000][UT.diff-1];
-  UT.turnCount++;
-  UT.attackIdx++;
+  UT.turnCount++;UT.attackIdx++;
   utShowTurn('Ход противника!');
 }
 
 function utEndAttack(){
-  UT.phase='player';
-  UT.projectiles=[];UT.bones=[];UT.beams=[];
+  UT.phase='player';UT.projectiles=[];UT.bones=[];UT.beams=[];
   var box=$('ut-box');var old=box.querySelectorAll('.ut-proj,.ut-bone,.ut-beam');
   for(var i=0;i<old.length;i++)old[i].remove();
   utShowActions();
-  var dlgSet=UT_DIALOGUES[Math.min(UT.turnCount,UT_DIALOGUES.length-1)];
-  if(UT.turnCount%2===0&&UT.bossHp>0){utShowDialogue(dlgSet)}
+  var dlg=UT_DIALOGUES[Math.min(UT.turnCount,UT_DIALOGUES.length-1)];
+  if(UT.turnCount%2===0&&UT.bossHp>0)utShowDialogue(dlg);
 }
 
-/* ─── ATTACK PATTERNS v2 ─── */
-/* All patterns guarantee a safe gap for the player */
+/* ─── ATTACKS v2 ─── */
 function utSpawnAttacks(elapsed){
-  var t=elapsed-UT.attackTimer;
   var interval=[550,380,240][UT.diff-1];
-  UT.spawnAcc+=16; // ~60fps
-  if(UT.spawnAcc<interval)return;
-  UT.spawnAcc=0;
-
-  var patternId=UT.attackIdx%10;
-  switch(patternId){
-    case 0: utPatBoneH(); break;
-    case 1: utPatBoneV(); break;
-    case 2: utPatProjAimed(); break;
-    case 3: utPatBlueBones(); break;   // BLUE
-    case 4: utPatOrangeBones(); break;  // ORANGE
-    case 5: utPatCircleSafe(); break;
-    case 6: utPatWaveSafe(t); break;
-    case 7: utPatBlueBones(); utPatProjSlow(); break;
-    case 8: utPatOrangeBones(); utPatProjSlow(); break;
-    case 9: utPatMixed(); break;
+  UT.spawnAcc+=16;if(UT.spawnAcc<interval)return;UT.spawnAcc=0;
+  var p=UT.attackIdx%10;
+  switch(p){
+    case 0:utPatBoneH();break;case 1:utPatBoneV();break;
+    case 2:utPatProjAimed();break;case 3:utPatBlueBones();break;
+    case 4:utPatOrangeBones();break;case 5:utPatCircleSafe();break;
+    case 6:utPatWave();break;case 7:utPatBlueBones();utPatProjSlow();break;
+    case 8:utPatOrangeBones();utPatProjSlow();break;case 9:utPatMixed();break;
   }
-
-  // beams on harder difficulties
-  if(UT.diff>=2&&t>3000&&Math.random()<0.002*UT.diff){utSpawnBeam()}
+  var t=elapsed-UT.attackTimer;
+  if(UT.diff>=2&&t>3000&&Math.random()<0.002*UT.diff)utSpawnBeam();
 }
 
-/* Horizontal bones with guaranteed gap ≥55px */
 function utPatBoneH(){
-  var minGap=55;var gap=minGap+Math.random()*35;
-  var gapY=minGap+Math.random()*(UT.boxH-gap-minGap*2);
-  var fromLeft=Math.random()>0.5;
-  var spd=(fromLeft?1:-1)*[1.8,2.5,3.5][UT.diff-1];
-  utAddBone(fromLeft?-20:UT.boxW,0,20,gapY,spd,0,'white');
-  utAddBone(fromLeft?-20:UT.boxW,gapY+gap,20,UT.boxH-(gapY+gap),spd,0,'white');
+  var gap=55+Math.random()*35;var gapY=30+Math.random()*(UT.boxH-gap-60);
+  var left=Math.random()>0.5;var spd=(left?1:-1)*[1.8,2.5,3.5][UT.diff-1];
+  utAddBone(left?-20:UT.boxW,0,20,gapY,spd,0,'white');
+  utAddBone(left?-20:UT.boxW,gapY+gap,20,UT.boxH-(gapY+gap),spd,0,'white');
 }
-
-/* Vertical bones with guaranteed gap */
 function utPatBoneV(){
-  var minGap=55;var gap=minGap+Math.random()*35;
-  var gapX=minGap+Math.random()*(UT.boxW-gap-minGap*2);
-  var fromTop=Math.random()>0.5;
-  var spd=(fromTop?1:-1)*[1.8,2.5,3.5][UT.diff-1];
-  utAddBone(0,fromTop?-20:UT.boxH,gapX,20,0,spd,'white');
-  utAddBone(gapX+gap,fromTop?-20:UT.boxH,UT.boxW-(gapX+gap),20,0,spd,'white');
+  var gap=55+Math.random()*35;var gapX=30+Math.random()*(UT.boxW-gap-60);
+  var top=Math.random()>0.5;var spd=(top?1:-1)*[1.8,2.5,3.5][UT.diff-1];
+  utAddBone(0,top?-20:UT.boxH,gapX,20,0,spd,'white');
+  utAddBone(gapX+gap,top?-20:UT.boxH,UT.boxW-(gapX+gap),20,0,spd,'white');
 }
-
-/* Aimed projectiles - slower, dodge-able */
 function utPatProjAimed(){
-  var cx=UT.px+9;var cy=UT.py+9;
-  var side=Math.floor(Math.random()*4);
-  var x,y;
-  if(side===0){x=Math.random()*UT.boxW;y=-8}
-  else if(side===1){x=Math.random()*UT.boxW;y=UT.boxH+8}
-  else if(side===2){x=-8;y=Math.random()*UT.boxH}
-  else{x=UT.boxW+8;y=Math.random()*UT.boxH}
-  var ang=Math.atan2(cy-y,cx-x);
-  // add slight randomness so not perfectly aimed
-  ang+=(Math.random()-0.5)*0.6;
+  var cx=UT.px+9;var cy=UT.py+9;var side=Math.floor(Math.random()*4);var x,y;
+  if(side===0){x=Math.random()*UT.boxW;y=-8}else if(side===1){x=Math.random()*UT.boxW;y=UT.boxH+8}
+  else if(side===2){x=-8;y=Math.random()*UT.boxH}else{x=UT.boxW+8;y=Math.random()*UT.boxH}
+  var ang=Math.atan2(cy-y,cx-x)+(Math.random()-0.5)*0.6;
   var spd=[1.8,2.5,3.5][UT.diff-1];
   utAddProj(x,y,Math.cos(ang)*spd,Math.sin(ang)*spd,5);
 }
-
-/* Slow easy-to-dodge projectiles */
 function utPatProjSlow(){
-  var side=Math.floor(Math.random()*4);
-  var x,y,vx,vy;var spd=[1.2,1.8,2.5][UT.diff-1];
+  var side=Math.floor(Math.random()*4);var x,y,vx,vy;var spd=[1.2,1.8,2.5][UT.diff-1];
   if(side===0){x=Math.random()*UT.boxW;y=-8;vx=0;vy=spd}
   else if(side===1){x=Math.random()*UT.boxW;y=UT.boxH+8;vx=0;vy=-spd}
   else if(side===2){x=-8;y=Math.random()*UT.boxH;vx=spd;vy=0}
@@ -1032,88 +773,50 @@ function utPatProjSlow(){
   utAddProj(x,y,vx,vy,5);
 }
 
-/* ═══ BLUE BONES — stay still to survive ═══ */
+/* 🔵 BLUE — stay still to survive */
 function utPatBlueBones(){
-  var fromLeft=Math.random()>0.5;
-  var spd=(fromLeft?1:-1)*[2,3,4][UT.diff-1];
-  var count=[2,3,4][UT.diff-1];
-  var spacing=UT.boxH/(count+1);
-  for(var i=0;i<count;i++){
-    var y=spacing*(i+1)-10;
-    utAddBone(fromLeft?-30:UT.boxW+10,y,25,20,spd,0,'blue');
-  }
+  var left=Math.random()>0.5;var spd=(left?1:-1)*[2,3,4][UT.diff-1];
+  var count=[2,3,4][UT.diff-1];var spacing=UT.boxH/(count+1);
+  for(var i=0;i<count;i++){utAddBone(left?-30:UT.boxW+10,spacing*(i+1)-10,25,20,spd,0,'blue')}
 }
 
-/* ═══ ORANGE BONES — keep moving to survive ═══ */
+/* 🟠 ORANGE — keep moving to survive */
 function utPatOrangeBones(){
-  var fromTop=Math.random()>0.5;
-  var spd=(fromTop?1:-1)*[2,3,4][UT.diff-1];
-  var count=[2,3,4][UT.diff-1];
-  var spacing=UT.boxW/(count+1);
-  for(var i=0;i<count;i++){
-    var x=spacing*(i+1)-10;
-    utAddBone(x,fromTop?-30:UT.boxH+10,20,25,0,spd,'orange');
-  }
+  var top=Math.random()>0.5;var spd=(top?1:-1)*[2,3,4][UT.diff-1];
+  var count=[2,3,4][UT.diff-1];var spacing=UT.boxW/(count+1);
+  for(var i=0;i<count;i++){utAddBone(spacing*(i+1)-10,top?-30:UT.boxH+10,20,25,0,spd,'orange')}
 }
 
-/* Circle with safe center */
 function utPatCircleSafe(){
-  var cx=UT.boxW/2;var cy=UT.boxH/2;
-  var n=[5,7,10][UT.diff-1];var spd=[1.5,2.2,3][UT.diff-1];
-  var offset=Math.random()*Math.PI*2;
-  // leave a gap in the circle for escape
-  var gapAngle=offset+Math.random()*Math.PI*2;
-  var gapSize=Math.PI*0.4;
-  for(var i=0;i<n;i++){
-    var a=offset+i/n*Math.PI*2;
-    // skip projectile if in gap zone
-    var diff=Math.abs(a-gapAngle);if(diff>Math.PI)diff=Math.PI*2-diff;
-    if(diff<gapSize/2)continue;
-    utAddProj(cx,cy,Math.cos(a)*spd,Math.sin(a)*spd,4);
-  }
+  var cx=UT.boxW/2;var cy=UT.boxH/2;var n=[5,7,10][UT.diff-1];
+  var spd=[1.5,2.2,3][UT.diff-1];var offset=Math.random()*Math.PI*2;
+  var gapA=offset+Math.random()*Math.PI*2;var gapS=Math.PI*0.5;
+  for(var i=0;i<n;i++){var a=offset+i/n*Math.PI*2;var diff=Math.abs(a-gapA);if(diff>Math.PI)diff=Math.PI*2-diff;if(diff<gapS/2)continue;utAddProj(cx,cy,Math.cos(a)*spd,Math.sin(a)*spd,4)}
 }
-
-/* Wave with dodge windows */
-function utPatWaveSafe(t){
-  var x=Math.sin(t/400)*UT.boxW*0.35+UT.boxW/2;
-  var spd=[1.5,2.2,3][UT.diff-1];
-  utAddProj(x,-8,0,spd,4);
+function utPatWave(){
+  var x=Math.random()*UT.boxW;utAddProj(x,-8,0,[1.5,2.2,3][UT.diff-1],4);
 }
-
-/* Mixed blue+orange */
-function utPatMixed(){
-  if(Math.random()>0.5)utPatBlueBones();
-  else utPatOrangeBones();
-}
+function utPatMixed(){if(Math.random()>0.5)utPatBlueBones();else utPatOrangeBones()}
 
 function utSpawnBeam(){
-  var horiz=Math.random()>0.5;
-  var pos=20+Math.random()*((horiz?UT.boxH:UT.boxW)-40);
-  var el=document.createElement('div');el.className='ut-beam';
-  var box=$('ut-box');
+  var horiz=Math.random()>0.5;var pos=20+Math.random()*((horiz?UT.boxH:UT.boxW)-40);
+  var el=document.createElement('div');el.className='ut-beam';var box=$('ut-box');
   if(horiz){el.style.left='0';el.style.width='100%';el.style.top=pos+'px';el.style.height='20px'}
   else{el.style.top='0';el.style.height='100%';el.style.left=pos+'px';el.style.width='20px'}
-  box.appendChild(el);
-  el.classList.add('warn');
-  setTimeout(function(){el.classList.remove('warn');el.classList.add('fire');
-    UT.beams.push({el:el,horiz:horiz,pos:pos,time:performance.now()});
-  },1000);
-  setTimeout(function(){el.classList.remove('fire');
-    setTimeout(function(){if(el.parentNode)el.remove()},200);
-    UT.beams=UT.beams.filter(function(b){return b.el!==el});
-  },1600);
+  box.appendChild(el);el.classList.add('warn');
+  setTimeout(function(){el.classList.remove('warn');el.classList.add('fire');UT.beams.push({el:el,horiz:horiz,pos:pos,time:performance.now()})},1000);
+  setTimeout(function(){el.classList.remove('fire');setTimeout(function(){if(el.parentNode)el.remove()},200);UT.beams=UT.beams.filter(function(b){return b.el!==el})},1600);
 }
 
 function utAddBone(x,y,w,h,vx,vy,color){
   var el=document.createElement('div');el.className='ut-bone';
   el.style.left=x+'px';el.style.top=y+'px';el.style.width=Math.max(4,w)+'px';el.style.height=Math.max(4,h)+'px';
-  if(color==='blue'){el.style.background='#42a5f5';el.style.boxShadow='0 0 6px #42a5f5'}
-  else if(color==='orange'){el.style.background='#ffa726';el.style.boxShadow='0 0 6px #ffa726'}
+  if(color==='blue'){el.style.background='#42a5f5';el.style.boxShadow='0 0 8px #42a5f5'}
+  else if(color==='orange'){el.style.background='#ffa726';el.style.boxShadow='0 0 8px #ffa726'}
   else{el.style.background='#fff'}
   $('ut-box').appendChild(el);
   UT.bones.push({el:el,x:x,y:y,w:w,h:h,vx:vx,vy:vy,color:color||'white'});
 }
-
 function utAddProj(x,y,vx,vy,r){
   var el=document.createElement('div');el.className='ut-proj';
   el.style.width=r*2+'px';el.style.height=r*2+'px';el.style.background='#fff';
@@ -1122,117 +825,84 @@ function utAddProj(x,y,vx,vy,r){
   UT.projectiles.push({el:el,x:x,y:y,vx:vx,vy:vy,r:r});
 }
 
-/* ─── SANS HELPER ─── */
-function utUpdateSans(now){
+/* ─── SANS (positioned relative to #S-ut) ─── */
+function utUpdateSans(){
   var s=UT.sans;
-  var mid=$('ut-mid');if(!mid)return;
-  var rect=mid.getBoundingClientRect();
+  // smooth move
+  s.x+=(s.tx-s.x)*0.025;s.y+=(s.ty-s.y)*0.025;
 
-  // move sans toward target
-  s.x+=(s.tx-s.x)*0.03;
-  s.y+=(s.ty-s.y)*0.03;
-
-  // pick new target periodically
+  // pick new target
   s.moveTimer-=16;
   if(s.moveTimer<=0){
-    s.moveTimer=1500+Math.random()*2000;
-    s.tx=30+Math.random()*(rect.width-80);
-    s.ty=10+Math.random()*(rect.height-60);
+    s.moveTimer=1500+Math.random()*2500;
+    // fly within #S-ut bounds
+    s.tx=20+Math.random()*(s.parentW*0.25);
+    s.ty=s.parentH*0.2+Math.random()*(s.parentH*0.5);
   }
 
-  // throw rocks during attack phase
+  // throw during attack
   if(UT.phase==='attack'){
     s.throwTimer-=16;
     if(s.throwTimer<=0){
-      s.throwTimer=2500+Math.random()*3000;
-      // 50% chance throw at boss (heals boss a tiny bit or just visual),
-      // 50% chance throw at player area (projectile into box)
-      if(Math.random()>0.4){
-        // throw rock into the box aimed roughly at center
-        var rx=Math.random()*UT.boxW;
-        var ry=-10;
-        utAddProj(rx,ry,0,[1.5,2,3][UT.diff-1],4);
-        utShowSansText('хех.');
+      s.throwTimer=2500+Math.random()*3500;
+      if(Math.random()>0.45){
+        // throw into box
+        utAddProj(Math.random()*UT.boxW,-10,(Math.random()-0.5)*0.8,[1.5,2,3][UT.diff-1],4);
+        utShowSansText(UT_SANS_PHRASES[Math.floor(Math.random()*UT_SANS_PHRASES.length)]);
       }else{
-        // throw at boss - deal 5-15 damage
-        var rdmg=5+Math.floor(Math.random()*10);
-        UT.bossHp-=rdmg;
-        utBossFlash();
-        utShowSansText('получай!');
-        if(UT.bossHp<=0){UT.bossHp=0;setTimeout(function(){utEnd(true)},800)}
+        // hit boss
+        var rdmg=5+Math.floor(Math.random()*15);
+        UT.bossHp=Math.max(0,UT.bossHp-rdmg);utBossFlash();
+        utShowSansText('получай! (-'+rdmg+')');
+        if(UT.bossHp<=0){setTimeout(function(){utEnd(true)},800)}
       }
     }
   }
 
-  // update rocks (visual particles from sans)
-  for(var i=s.rocks.length-1;i>=0;i--){
-    var r=s.rocks[i];r.age+=16;
-    r.x+=r.vx;r.y+=r.vy;r.vy+=0.15;
-    if(r.age>600){s.rocks.splice(i,1);continue}
-    var rel=r.el;if(rel){rel.style.left=r.x+'px';rel.style.top=r.y+'px';rel.style.opacity=1-r.age/600}
-  }
-
-  // update sans position on screen
+  // update DOM position
   var sansEl=$('ut-sans');
-  if(sansEl){
-    sansEl.style.left=s.x+'px';
-    sansEl.style.top=s.y+'px';
-  }
+  if(sansEl){sansEl.style.left=Math.round(s.x)+'px';sansEl.style.top=Math.round(s.y)+'px'}
 }
 
-var _sansTextTimer=null;
+var _sansTimer=null;
 function utShowSansText(txt){
   var el=$('ut-sans-txt');if(!el)return;
   el.textContent=txt;el.style.opacity='1';
-  if(_sansTextTimer)clearTimeout(_sansTextTimer);
-  _sansTextTimer=setTimeout(function(){el.style.opacity='0'},1200);
+  if(_sansTimer)clearTimeout(_sansTimer);
+  _sansTimer=setTimeout(function(){el.style.opacity='0'},1500);
 }
 
-/* ─── GAME LOOP ─── */
+/* ─── MAIN LOOP ─── */
 function utLoop(){
   if(!UT.active)return;
   var now=performance.now();
   if(UT.inv>0)UT.inv-=16;
 
-  // check if player is moving (for blue/orange bones)
+  // movement detection for blue/orange
   var dx=UT.px-UT.prevPx;var dy=UT.py-UT.prevPy;
   UT.isMoving=Math.abs(dx)>0.3||Math.abs(dy)>0.3;
   UT.prevPx=UT.px;UT.prevPy=UT.py;
 
   if(UT.phase==='attack'){
-    utMoveHeart();
-    utSpawnAttacks(now);
-    utMoveProjectiles();
-    utMoveBones();
-    utCheckCollisions();
-    utCheckBeamHits();
-    if(now-UT.attackTimer>UT.attackDur){utEndAttack()}
-  }
-  else if(UT.phase==='player'){
+    utMoveHeart();utSpawnAttacks(now);
+    utMoveProjectiles();utMoveBones();
+    utCheckCollisions();utCheckBeamHits();
+    if(now-UT.attackTimer>UT.attackDur)utEndAttack();
+  }else if(UT.phase==='player'){
     if(UT.atkBarActive)utMoveAtkCursor();
   }
 
-  // update sans
-  utUpdateSans(now);
+  utUpdateSans();
 
   // boss flash decay
-  if(UT.bossFlash>0){
-    UT.bossFlash-=16;
-    if(UT.bossFlash<=0){
-      UT.bossFlash=0;
-      var img=$('ut-opp-img');if(img)img.style.filter='drop-shadow(0 0 8px rgba(255,255,255,.2))';
-    }
-  }
+  if(UT.bossFlash>0){UT.bossFlash-=16;if(UT.bossFlash<=0){UT.bossFlash=0;var img=$('ut-opp-img');if(img)img.style.filter='drop-shadow(0 0 8px rgba(255,255,255,.2))'}}
 
-  // screen shake decay
+  // screen shake
   if(UT.shakeTime>0){
     UT.shakeTime-=16;
-    UT.shakeX=(Math.random()-0.5)*6;
-    UT.shakeY=(Math.random()-0.5)*6;
-    var mid=$('ut-mid');if(mid)mid.style.transform='translate('+UT.shakeX+'px,'+UT.shakeY+'px)';
-    if(UT.shakeTime<=0){
-      var mid2=$('ut-mid');if(mid2)mid2.style.transform='';
-    }
+    var mid=$('ut-mid');
+    if(mid)mid.style.transform='translate('+(Math.random()-0.5)*6+'px,'+(Math.random()-0.5)*6+'px)';
+    if(UT.shakeTime<=0&&mid)mid.style.transform='';
   }
 
   utUpdateHp();
@@ -1241,85 +911,51 @@ function utLoop(){
 }
 
 function utMoveHeart(){
-  var spd=UT.pSpeed;
-  if(UT.keys['ArrowLeft']||UT.keys['a'])UT.px-=spd;
-  if(UT.keys['ArrowRight']||UT.keys['d'])UT.px+=spd;
-  if(UT.keys['ArrowUp']||UT.keys['w'])UT.py-=spd;
-  if(UT.keys['ArrowDown']||UT.keys['s'])UT.py+=spd;
+  var spd=UT.pSpeed;var k=UT.keys;
+  // ← FIX: check BOTH e.key AND e.code for all layouts →
+  if(k['ArrowLeft']||k['KeyA']||k['a']||k['ф'])UT.px-=spd;
+  if(k['ArrowRight']||k['KeyD']||k['d']||k['в'])UT.px+=spd;
+  if(k['ArrowUp']||k['KeyW']||k['w']||k['ц'])UT.py-=spd;
+  if(k['ArrowDown']||k['KeyS']||k['s']||k['ы'])UT.py+=spd;
   UT.px=Math.max(0,Math.min(UT.boxW-18,UT.px));
   UT.py=Math.max(0,Math.min(UT.boxH-18,UT.py));
   var h=$('ut-heart');h.style.left=UT.px+'px';h.style.top=UT.py+'px';
   h.style.opacity=(UT.inv>0&&Math.floor(UT.inv/50)%2===0)?'0.3':'1';
 }
 
-function utMoveProjectiles(){
-  for(var i=UT.projectiles.length-1;i>=0;i--){
-    var p=UT.projectiles[i];p.x+=p.vx;p.y+=p.vy;
-    p.el.style.left=(p.x-p.r)+'px';p.el.style.top=(p.y-p.r)+'px';
-    if(p.x<-30||p.x>UT.boxW+30||p.y<-30||p.y>UT.boxH+30){p.el.remove();UT.projectiles.splice(i,1)}
-  }
-}
-
-function utMoveBones(){
-  for(var i=UT.bones.length-1;i>=0;i--){
-    var b=UT.bones[i];b.x+=b.vx;b.y+=b.vy;
-    b.el.style.left=b.x+'px';b.el.style.top=b.y+'px';
-    if(b.x<-100||b.x>UT.boxW+100||b.y<-100||b.y>UT.boxH+100){b.el.remove();UT.bones.splice(i,1)}
-  }
-}
+function utMoveProjectiles(){for(var i=UT.projectiles.length-1;i>=0;i--){var p=UT.projectiles[i];p.x+=p.vx;p.y+=p.vy;p.el.style.left=(p.x-p.r)+'px';p.el.style.top=(p.y-p.r)+'px';if(p.x<-30||p.x>UT.boxW+30||p.y<-30||p.y>UT.boxH+30){p.el.remove();UT.projectiles.splice(i,1)}}}
+function utMoveBones(){for(var i=UT.bones.length-1;i>=0;i--){var b=UT.bones[i];b.x+=b.vx;b.y+=b.vy;b.el.style.left=b.x+'px';b.el.style.top=b.y+'px';if(b.x<-100||b.x>UT.boxW+100||b.y<-100||b.y>UT.boxH+100){b.el.remove();UT.bones.splice(i,1)}}}
 
 function utCheckCollisions(){
   if(UT.inv>0)return;
   var hx=UT.px+4,hy=UT.py+4,hw=10,hh=10;
   var dmg=[5,8,12][UT.diff-1];
-
-  // projectiles
   for(var i=0;i<UT.projectiles.length;i++){
-    var p=UT.projectiles[i];
-    var pdx=hx+hw/2-p.x;var pdy=hy+hh/2-p.y;
+    var p=UT.projectiles[i];var pdx=hx+hw/2-p.x;var pdy=hy+hh/2-p.y;
     if(Math.sqrt(pdx*pdx+pdy*pdy)<p.r+5){utTakeDmg(dmg);return}
   }
-  // bones
   for(var i=0;i<UT.bones.length;i++){
     var b=UT.bones[i];
     if(hx<b.x+b.w&&hx+hw>b.x&&hy<b.y+b.h&&hy+hh>b.y){
-      // blue bone: only hurts if moving
-      if(b.color==='blue'){
-        if(UT.isMoving){utTakeDmg(dmg);return}
-        // else pass through safely
-      }
-      // orange bone: only hurts if NOT moving
-      else if(b.color==='orange'){
-        if(!UT.isMoving){utTakeDmg(dmg);return}
-        // else pass through safely
-      }
-      // white bone: always hurts
-      else{
-        utTakeDmg(dmg);return;
-      }
+      if(b.color==='blue'){if(UT.isMoving){utTakeDmg(dmg);return}}
+      else if(b.color==='orange'){if(!UT.isMoving){utTakeDmg(dmg);return}}
+      else{utTakeDmg(dmg);return}
     }
   }
 }
 
 function utCheckBeamHits(){
-  if(UT.inv>0)return;
-  var hx=UT.px+4,hy=UT.py+4;var dmg=[8,12,18][UT.diff-1];
-  for(var i=0;i<UT.beams.length;i++){
-    var b=UT.beams[i];
+  if(UT.inv>0)return;var hx=UT.px+4,hy=UT.py+4;var dmg=[8,12,18][UT.diff-1];
+  for(var i=0;i<UT.beams.length;i++){var b=UT.beams[i];
     if(b.horiz){if(hy>b.pos-5&&hy<b.pos+25){utTakeDmg(dmg);return}}
     else{if(hx>b.pos-5&&hx<b.pos+25){utTakeDmg(dmg);return}}
   }
 }
 
-function utTakeDmg(dmg){
-  UT.hp-=dmg;UT.inv=1000;
-  UT.shakeTime=200; // screen shake
-  utUpdateHp();
-}
+function utTakeDmg(dmg){UT.hp-=dmg;UT.inv=1000;UT.shakeTime=250;utUpdateHp()}
 
 function utMoveAtkCursor(){
-  var bar=$('ut-atk-bar');var bw=bar.offsetWidth||300;
-  var spd=[4,6,9][UT.diff-1];
+  var bar=$('ut-atk-bar');var bw=bar.offsetWidth||300;var spd=[4,6,9][UT.diff-1];
   UT.atkCursorX+=spd*UT.atkCursorDir;
   if(UT.atkCursorX>=bw){UT.atkCursorX=bw;UT.atkCursorDir=-1}
   if(UT.atkCursorX<=0){UT.atkCursorX=0;UT.atkCursorDir=1}
@@ -1327,48 +963,58 @@ function utMoveAtkCursor(){
 }
 
 function utEnd(won){
-  utStop();
-  $('ut-result').classList.add('on');
+  utStop();$('ut-result').classList.add('on');
   $('ut-res-title').textContent=won?'* YOU WON!':'* YOU DIED';
   $('ut-res-title').className=won?'win':'lose';
-  $('ut-res-stats').innerHTML='HP: '+Math.ceil(Math.max(0,UT.hp))+'/'+UT.maxHp
-    +'<br>Boss HP: '+Math.ceil(Math.max(0,UT.bossHp))+'/'+UT.bossMaxHp
-    +'<br>Mercy: '+Math.floor(UT.mercy)+'%'
-    +'<br>Turns: '+UT.turnCount;
+  $('ut-res-stats').innerHTML='HP: '+Math.ceil(Math.max(0,UT.hp))+'/'+UT.maxHp+'<br>Boss HP: '+Math.ceil(Math.max(0,UT.bossHp))+'/'+UT.bossMaxHp+'<br>Mercy: '+Math.floor(UT.mercy)+'%<br>Turns: '+UT.turnCount;
   var btn=$('ut-res-btn');var sc=UT.sceneData;
   if(won){btn.textContent='* Continue';btn.onclick=function(){$('ut-result').classList.remove('on');if(sc&&sc.next){scr('S-game');gameLoad(sc.next)}else{scr('S-game');gameEnd()}}}
   else{btn.textContent='* Try Again';btn.onclick=function(){$('ut-result').classList.remove('on');utStart(sc)}}
 }
 
-/* ─── CONTROLS ─── */
+/* ═══ GLOBAL KEY HANDLERS ═══ */
+/* ← FIX: store BOTH key AND code for layout independence → */
 document.addEventListener('keydown',function(e){
-  UT.keys[e.key]=true;
-  if(UT.active){
-    if(UT.phase==='dialogue'&&(e.key==='z'||e.key==='Enter'||e.key===' ')){utAdvanceDialogue()}
-    if(UT.atkBarActive&&(e.key==='z'||e.key==='Enter'||e.key===' ')){utDoFightHit()}
+  // FNF boss
+  if(BF.active){
+    if(e.key==='ArrowLeft'||e.code==='KeyA')bfHit(0);
+    else if(e.key==='ArrowDown'||e.code==='KeyS')bfHit(1);
+    else if(e.key==='ArrowUp'||e.code==='KeyW')bfHit(2);
+    else if(e.key==='ArrowRight'||e.code==='KeyD')bfHit(3);
   }
+  // UT keys — store key AND code
+  UT.keys[e.key]=true;
+  UT.keys[e.code]=true;
+  if(UT.active){
+    if(UT.phase==='dialogue'&&(e.key==='z'||e.key==='Enter'||e.key===' '||e.key==='я'))utAdvanceDialogue();
+    if(UT.atkBarActive&&(e.key==='z'||e.key==='Enter'||e.key===' '||e.key==='я'))utDoFightHit();
+  }
+  // Dino
+  if(DG.active&&(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')){e.preventDefault();dinoJump()}
 });
-document.addEventListener('keyup',function(e){UT.keys[e.key]=false});
+document.addEventListener('keyup',function(e){
+  UT.keys[e.key]=false;
+  UT.keys[e.code]=false;
+});
 
-/* UT dialogue & fight bar click */
+/* UT click for dialogue/fight bar */
 document.addEventListener('click',function(e){
   if(!UT.active)return;
-  if(UT.phase==='dialogue'){utAdvanceDialogue()}
-  else if(UT.atkBarActive){utDoFightHit()}
+  if(UT.phase==='dialogue')utAdvanceDialogue();
+  else if(UT.atkBarActive)utDoFightHit();
 });
 
-/* UT touch controls */
+/* UT touch drag for heart */
 (function(){
   var tx=0,ty=0,touching=false;
   document.addEventListener('touchstart',function(e){
     if(!UT.active||UT.phase!=='attack')return;
-    touching=true;var t=e.touches[0];tx=t.clientX;ty=t.clientY;
+    touching=true;tx=e.touches[0].clientX;ty=e.touches[0].clientY;
   });
   document.addEventListener('touchmove',function(e){
     if(!touching||!UT.active||UT.phase!=='attack')return;
-    e.preventDefault();
-    var t=e.touches[0];var ddx=t.clientX-tx;var ddy=t.clientY-ty;
-    UT.px+=ddx;UT.py+=ddy;
+    e.preventDefault();var t=e.touches[0];
+    UT.px+=t.clientX-tx;UT.py+=t.clientY-ty;
     UT.px=Math.max(0,Math.min(UT.boxW-18,UT.px));
     UT.py=Math.max(0,Math.min(UT.boxH-18,UT.py));
     tx=t.clientX;ty=t.clientY;
@@ -1379,11 +1025,7 @@ document.addEventListener('click',function(e){
 /* ═══ INIT ═══ */
 (function(){
   if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand()}
-  loadData().then(function(){
-    updateMenu();
-    $('loader').classList.add('hide');
-    setTimeout(function(){$('loader').style.display='none'},600);
-  });
+  loadData().then(function(){updateMenu();$('loader').classList.add('hide');setTimeout(function(){$('loader').style.display='none'},600)});
 })();
 </script>
 </body>
