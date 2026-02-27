@@ -157,8 +157,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 @keyframes papFly{0%,100%{transform:translateY(0) rotate(3deg)}50%{transform:translateY(-8px) rotate(-3deg)}}
 /* CHESS BOSS */
 #S-chess{flex-direction:row!important;background:#000;position:relative;overflow:hidden}
-#cb-board-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0}
-#cb-board{width:100%;height:100%;display:block}
+#cb-board-wrap{position:relative;flex:1;display:flex;align-items:stretch;justify-content:stretch;overflow:hidden;min-width:0;min-height:0}
+#cb-board{display:block;width:100%;height:100%}
 #cb-side{width:clamp(160px,34%,280px);flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:6px 8px;gap:5px;background:rgba(0,5,20,.95);border-left:1px solid rgba(0,255,200,.15);overflow:hidden}
 #cb-boss-cvs{flex-shrink:0;display:block}
 #cb-bname{font-family:'Courier New',monospace;font-size:clamp(10px,1.4vw,14px);color:#00ffcc;font-weight:700;text-align:center;letter-spacing:1px}
@@ -310,7 +310,16 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 <div id="S-chess" class="scr">
   <button class="ut-bbk" onclick="cbBack()">← Назад</button>
   <div id="cb-phase-ind"></div>
-  <div id="cb-board-wrap"><canvas id="cb-board"></canvas></div>
+  <div id="cb-board-wrap">
+    <canvas id="cb-board"></canvas>
+    <div id="cb-phpw"><span>❤</span><div id="cb-phpbar"><div id="cb-phpfill"></div></div><span id="cb-phptxt"></span></div>
+    <div id="cb-overlay-phase"></div>
+    <div id="cb-result">
+      <h2 id="cb-rtitle"></h2>
+      <div id="cb-rstats"></div>
+      <button class="bplay" id="cb-rbtn" style="font-size:15px;padding:12px 40px;font-family:monospace"></button>
+    </div>
+  </div>
   <div id="cb-side">
     <canvas id="cb-boss-cvs"></canvas>
     <div id="cb-bname">SYSTEM.exe</div>
@@ -321,13 +330,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
       <button class="cb-btn" onclick="cbAct('move')">♞ Ход</button>
     </div>
     <div id="cb-timing"><div id="cb-tz"></div><div id="cb-tc"></div></div>
-  </div>
-  <div id="cb-phpw"><span>❤</span><div id="cb-phpbar"><div id="cb-phpfill"></div></div><span id="cb-phptxt"></span></div>
-  <div id="cb-overlay-phase"></div>
-  <div id="cb-result">
-    <h2 id="cb-rtitle"></h2>
-    <div id="cb-rstats"></div>
-    <button class="bplay" id="cb-rbtn" style="font-size:15px;padding:12px 40px;font-family:monospace"></button>
   </div>
 </div>
 <div class="modal" id="M-code"><div class="mbox"><h2>Код доступа</h2><div class="fg"><label>Код</label><input type="password" id="i-code" maxlength="10"></div><div class="err-msg" id="code-err" style="display:none">Неверный код</div><div class="brow"><button class="bp" onclick="checkCode()">Войти</button><button class="bs" onclick="hideM('M-code')">Отмена</button></div></div></div>
@@ -995,7 +997,6 @@ function cbStop(){
 
 function cbStart(sd){
   cbStop();CB.sd=sd;
-  var diff=sd.utDiff||2;
   CB.mhp=100;CB.hp=100;CB.bmhp=sd.utBossHp||3000;CB.bhp=CB.bmhp;
   CB.phase=1;CB.turn=0;CB.tp='dialogue';CB.inv=0;CB.t=0;
   CB.shake=0;CB.glitch=0;CB.dangerSquares=[];
@@ -1008,22 +1009,26 @@ function cbStart(sd){
   $('cb-overlay-phase').classList.remove('on');
   $('cb-phase-ind').textContent='◈ PHASE 1';
   cbHideActs();
-  requestAnimationFrame(function(){requestAnimationFrame(function(){
-    cbSetup();cbUpdateHP();cbUpdateBHP();
+  // Give browser time to compute layout after display change
+  setTimeout(function(){
+    cbSetup();
+    cbUpdateHP();cbUpdateBHP();
     cbBossDlg(CBM.intro,function(){CB.tp='player';cbShowActs()});
     cbLoadAudio(sd.id);
     CB.active=true;CB.raf=requestAnimationFrame(cbLoop);
-  })});
+  },80);
 }
 
 function cbSetup(){
   var bwrap=$('cb-board-wrap'),br=bwrap.getBoundingClientRect();
+  var W=br.width||window.innerWidth*.6,H=br.height||window.innerHeight;
   var bd=$('cb-board');
-  bd.width=Math.floor(br.width*2);bd.height=Math.floor(br.height*2);
-  bd.style.width=br.width+'px';bd.style.height=br.height+'px';
-  CB.bw=br.width;CB.bh=br.height;
+  bd.width=Math.floor(W*2);bd.height=Math.floor(H*2);
+  bd.style.width=W+'px';bd.style.height=H+'px';
+  CB.bw=W;CB.bh=H;
   var side=$('cb-side'),sr=side.getBoundingClientRect();
-  var sz=Math.min(sr.width*0.85,180);
+  var sw=sr.width||window.innerWidth*.32;
+  var sz=Math.min(sw*0.85,180);
   var bc=$('cb-boss-cvs');
   bc.width=Math.floor(sz*2);bc.height=Math.floor(sz*3);
   bc.style.width=sz+'px';bc.style.height=(sz*1.5)+'px';
@@ -1060,15 +1065,18 @@ function cbLoop(){
   if(CB.shake>0)CB.shake-=16;
   if(CB.glitch>0)CB.glitch-=16;
 
-  // Draw board
-  var bd=$('cb-board'),ctx=bd.getContext('2d');
-  ctx.save();ctx.scale(2,2);cbDrawBoard(ctx);ctx.restore();
+  // Re-setup if canvas dimensions were 0
+  if(CB.bw<=0||CB.bh<=0){cbSetup();}
 
-  // Draw boss
-  var bc=$('cb-boss-cvs'),bctx=bc.getContext('2d');
-  bctx.save();bctx.scale(2,2);cbDrawBoss(bctx,CB.bossW,CB.bossH);bctx.restore();
+  if(CB.bw>0&&CB.bh>0){
+    var bd=$('cb-board'),ctx=bd.getContext('2d');
+    ctx.save();ctx.scale(2,2);cbDrawBoard(ctx);ctx.restore();
+  }
+  if(CB.bossW>0&&CB.bossH>0){
+    var bc=$('cb-boss-cvs'),bctx=bc.getContext('2d');
+    bctx.save();bctx.scale(2,2);cbDrawBoss(bctx,CB.bossW,CB.bossH);bctx.restore();
+  }
 
-  // Attack bar
   if(CB.abA){
     var tw=$('cb-timing').offsetWidth||200;
     var sp=[4,6,9][Math.min(2,(CB.sd.utDiff||2)-1)];
@@ -1077,7 +1085,6 @@ function cbLoop(){
     $('cb-tc').style.left=CB.abX+'px';
   }
 
-  // Shake
   if(CB.shake>0)$('cb-board-wrap').style.transform='translate('+(Math.random()-.5)*8+'px,'+(Math.random()-.5)*8+'px)';
   else $('cb-board-wrap').style.transform='';
 
