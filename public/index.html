@@ -156,34 +156,33 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 @keyframes sansFly{0%,100%{transform:translateY(0) rotate(-5deg)}25%{transform:translateY(-6px) rotate(0)}50%{transform:translateY(-10px) rotate(5deg)}75%{transform:translateY(-4px) rotate(2deg)}}
 @keyframes papFly{0%,100%{transform:translateY(0) rotate(3deg)}50%{transform:translateY(-8px) rotate(-3deg)}}
 /* CHESS BOSS */
-#S-chess{background:#000;position:relative;overflow:hidden}
-#cb-board-wrap{position:absolute;top:0;left:0;bottom:0;right:clamp(160px,34%,280px)}
-#cb-board{position:absolute;top:0;left:0;display:block}
-#cb-side{position:absolute;top:0;right:0;bottom:0;width:clamp(160px,34%,280px);display:flex;flex-direction:column;align-items:center;padding:6px 8px;gap:5px;background:rgba(0,5,20,.95);border-left:1px solid rgba(0,255,200,.15);overflow:hidden}
-#cb-boss-cvs{flex-shrink:0;display:block}
-#cb-bname{font-family:'Courier New',monospace;font-size:clamp(10px,1.4vw,14px);color:#00ffcc;font-weight:700;text-align:center;letter-spacing:1px}
+#S-chess{flex-direction:row!important;background:#060c1a;position:relative;overflow:hidden}
+#cb-board-wrap{position:relative;z-index:1;flex:1;display:flex;align-items:stretch;justify-content:stretch;min-width:0}
+#cb-board{width:100%;height:100%;display:block}
+#cb-side{position:relative;z-index:2;width:clamp(160px,32%,260px);flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:8px;gap:6px;background:#000c1e;border-left:2px solid #00ffcc44;overflow:hidden}
+#cb-boss-cvs{flex-shrink:0;display:block;border-radius:6px}
+#cb-bname{font-family:'Courier New',monospace;font-size:clamp(11px,1.5vw,15px);color:#00ffcc;font-weight:700;text-align:center;letter-spacing:1px;text-shadow:0 0 8px #00ffcc}
 #cb-bhpw{display:flex;align-items:center;gap:4px;width:100%;font-family:'Courier New',monospace;font-size:10px;color:#7878a0}
-#cb-bhpbar{flex:1;height:10px;background:#020818;border:1px solid #0a3030;border-radius:3px;overflow:hidden}
+#cb-bhpbar{flex:1;height:10px;background:#021020;border:1px solid #00ffcc44;border-radius:3px;overflow:hidden}
 #cb-bhpfill{height:100%;background:linear-gradient(90deg,#00ffcc,#00aaff);transition:width .4s;border-radius:3px}
 #cb-bhptxt{min-width:46px;text-align:right;font-size:9px;color:#7878a0;font-family:'Courier New',monospace}
-#cb-dlg{font-family:'Courier New',monospace;font-size:clamp(9px,1.1vw,12px);color:#cce;text-align:left;min-height:28px;padding:4px 8px;background:rgba(0,255,200,.04);border-radius:5px;border:1px solid rgba(0,255,200,.1);width:100%;line-height:1.5;word-break:break-word}
+#cb-dlg{font-family:'Courier New',monospace;font-size:clamp(9px,1.1vw,12px);color:#aaddff;padding:6px 8px;background:#001428;border-radius:5px;border:1px solid #00ffcc33;width:100%;line-height:1.5;min-height:32px;word-break:break-word;flex-shrink:0}
 #cb-acts{display:flex;gap:5px;flex-shrink:0}
-.cb-btn{padding:clamp(5px,.9vw,9px) clamp(8px,1.3vw,14px);background:rgba(0,0,0,.8);border:2px solid #00ffcc;color:#00ffcc;font-family:'Courier New',monospace;font-size:clamp(10px,1.2vw,13px);font-weight:700;cursor:pointer;border-radius:5px;white-space:nowrap}
+.cb-btn{padding:clamp(6px,1vw,10px) clamp(10px,1.5vw,16px);background:#001428;border:2px solid #00ffcc;color:#00ffcc;font-family:'Courier New',monospace;font-size:clamp(11px,1.3vw,14px);font-weight:700;cursor:pointer;border-radius:5px;white-space:nowrap}
 .cb-btn:disabled{opacity:.25;cursor:not-allowed}.cb-btn:hover:not(:disabled){background:#00ffcc;color:#000}
-#cb-timing{width:100%;height:18px;background:#000;border:2px solid #fff;position:relative;overflow:hidden;display:none;flex-shrink:0}
+#cb-timing{width:100%;height:22px;background:#000;border:2px solid #fff;position:relative;overflow:hidden;display:none;flex-shrink:0;border-radius:3px}
 #cb-timing.show{display:block}
 #cb-tz{position:absolute;top:0;height:100%;background:rgba(255,255,255,.18);border-left:2px solid #fff;border-right:2px solid #fff}
 #cb-tc{position:absolute;top:0;width:3px;height:100%;background:#0f0}
-#cb-phpw{position:absolute;bottom:4px;left:4px;right:4px;display:flex;align-items:center;gap:4px;font-family:'Courier New',monospace;font-size:10px;color:#f66;z-index:10;pointer-events:none}
-#cb-phpbar{flex:1;height:10px;background:#1a0000;border:1px solid #500;border-radius:3px;overflow:hidden}
+#cb-phpw{width:100%;display:flex;align-items:center;gap:4px;font-family:'Courier New',monospace;font-size:10px;color:#f88;flex-shrink:0}
+#cb-phpbar{flex:1;height:10px;background:#1a0000;border:1px solid #f004;border-radius:3px;overflow:hidden}
 #cb-phpfill{height:100%;background:linear-gradient(90deg,#f00,#f90);transition:width .3s;border-radius:3px}
 #cb-phptxt{min-width:46px;text-align:right;font-size:9px;color:#f88;font-family:'Courier New',monospace}
-#cb-phase-ind{position:absolute;top:5px;left:50%;transform:translateX(-50%);font-family:'Courier New',monospace;font-size:clamp(9px,1.2vw,12px);color:#00ffcc;z-index:20;letter-spacing:2px;pointer-events:none}
-#cb-overlay-phase{position:absolute;inset:0;z-index:25;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.88);font-family:'Courier New',monospace;font-size:clamp(18px,3.5vw,44px);color:#00ffcc;font-weight:900;text-shadow:0 0 30px #00ffcc;letter-spacing:4px;flex-direction:column;gap:12px}
+#cb-phase-ind{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-family:'Courier New',monospace;font-size:clamp(10px,1.3vw,13px);color:#00ffcc;z-index:20;letter-spacing:2px;pointer-events:none;text-shadow:0 0 6px #00ffcc}
+#cb-overlay-phase{position:absolute;inset:0;z-index:25;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.88);font-family:'Courier New',monospace;font-size:clamp(20px,4vw,48px);color:#00ffcc;font-weight:900;text-shadow:0 0 30px #00ffcc;letter-spacing:4px;flex-direction:column;gap:12px}
 #cb-overlay-phase.on{display:flex}
 #cb-result{position:absolute;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.96);gap:18px}
 #cb-result.on{display:flex}
-#S-chess.on{display:block!important}
 #cb-rtitle{font-size:clamp(26px,5vw,50px);font-weight:900;font-family:'Courier New',monospace}
 #cb-rstats{color:#7878a0;font-size:clamp(12px,1.8vw,18px);text-align:center;line-height:2;font-family:'Courier New',monospace}
 /* DEV */
@@ -309,11 +308,10 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 </div>
 </div>
 <div id="S-chess" class="scr">
-  <button class="ut-bbk" onclick="cbBack()">← Назад</button>
+  <button class="ut-bbk" onclick="cbBack()" style="z-index:30">← Назад</button>
   <div id="cb-phase-ind"></div>
   <div id="cb-board-wrap">
     <canvas id="cb-board"></canvas>
-    <div id="cb-phpw"><span>❤</span><div id="cb-phpbar"><div id="cb-phpfill"></div></div><span id="cb-phptxt"></span></div>
     <div id="cb-overlay-phase"></div>
     <div id="cb-result">
       <h2 id="cb-rtitle"></h2>
@@ -331,6 +329,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
       <button class="cb-btn" onclick="cbAct('move')">♞ Ход</button>
     </div>
     <div id="cb-timing"><div id="cb-tz"></div><div id="cb-tc"></div></div>
+    <div id="cb-phpw"><span>❤</span><div id="cb-phpbar"><div id="cb-phpfill"></div></div><span id="cb-phptxt"></span></div>
   </div>
 </div>
 <div class="modal" id="M-code"><div class="mbox"><h2>Код доступа</h2><div class="fg"><label>Код</label><input type="password" id="i-code" maxlength="10"></div><div class="err-msg" id="code-err" style="display:none">Неверный код</div><div class="brow"><button class="bp" onclick="checkCode()">Войти</button><button class="bs" onclick="hideM('M-code')">Отмена</button></div></div></div>
@@ -1010,26 +1009,25 @@ function cbStart(sd){
   $('cb-overlay-phase').classList.remove('on');
   $('cb-phase-ind').textContent='◈ PHASE 1';
   cbHideActs();
-  // Layout is absolute so window dimensions are available immediately
-  setTimeout(function(){
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
     cbSetup();
     cbUpdateHP();cbUpdateBHP();
     cbBossDlg(CBM.intro,function(){CB.tp='player';cbShowActs()});
     cbLoadAudio(sd.id);
     CB.active=true;CB.raf=requestAnimationFrame(cbLoop);
-  },20);
+  })});
 }
 
 function cbSetup(){
-  var sideW=Math.min(Math.floor(window.innerWidth*.34),280);
-  sideW=Math.max(sideW,160);
-  var W=window.innerWidth-sideW;
-  var H=window.innerHeight;
+  var bw=$('cb-board-wrap'),br=bw.getBoundingClientRect();
+  var W=br.width||300,H=br.height||400;
   var bd=$('cb-board');
-  bd.width=W*2;bd.height=H*2;
+  bd.width=Math.floor(W*2);bd.height=Math.floor(H*2);
   bd.style.width=W+'px';bd.style.height=H+'px';
   CB.bw=W;CB.bh=H;
-  var sz=Math.min(Math.floor(sideW*.85),180);
+  var sd=$('cb-side'),sr=sd.getBoundingClientRect();
+  var sw=sr.width||200;
+  var sz=Math.min(Math.floor(sw*.85),180);
   var bc=$('cb-boss-cvs');
   bc.width=sz*2;bc.height=Math.floor(sz*3);
   bc.style.width=sz+'px';bc.style.height=Math.floor(sz*1.5)+'px';
@@ -1097,20 +1095,20 @@ function cbDrawBoard(ctx){
   var w=CB.bw,h=CB.bh;
   ctx.clearRect(0,0,w,h);
   var gr=ctx.createLinearGradient(0,0,0,h);
-  gr.addColorStop(0,CB.phase>=4?'#0c0018':'#050015');
-  gr.addColorStop(1,'#000510');
+  gr.addColorStop(0,CB.phase>=4?'#200030':'#020820');
+  gr.addColorStop(1,'#000d1a');
   ctx.fillStyle=gr;ctx.fillRect(0,0,w,h);
 
   // Stars
-  ctx.fillStyle='rgba(200,220,255,.5)';
-  for(var s=0;s<25;s++){ctx.fillRect((Math.sin(s*137.5)*.5+.5)*w,(Math.cos(s*89.3)*.5+.5)*h*.12,1,1)}
+  ctx.fillStyle='rgba(200,230,255,.8)';
+  for(var s=0;s<30;s++){ctx.fillRect((Math.sin(s*137.5)*.5+.5)*w,(Math.cos(s*89.3)*.5+.5)*h*.15,1.5,1.5)}
 
   // Tiles
   for(var r=0;r<8;r++){
     for(var c=0;c<8;c++){
       var p00=cbProj(c,r),p10=cbProj(c+1,r),p11=cbProj(c+1,r+1),p01=cbProj(c,r+1);
       var dark=(r+c)%2===0;
-      var lc=['#0e2040','#061020'],lc2=['#0a1830','#060e18'],lc3=['#140830','#08041a'],lc4=['#1a0025','#0d0018'];
+      var lc=['#1a3a6a','#0d2040'],lc2=['#162850','#0a1830'],lc3=['#2a1050','#18082a'],lc4=['#380050','#1e0030'];
       var pair=[lc,lc2,lc3,lc4][Math.min(3,CB.phase-1)];
       ctx.fillStyle=dark?pair[1]:pair[0];
       // Danger
@@ -1125,12 +1123,12 @@ function cbDrawBoard(ctx){
       if(c===CB.px&&r===CB.py)ctx.fillStyle='rgba(255,215,0,'+(0.18+.1*Math.sin(CB.t*.012))+')';
 
       ctx.beginPath();ctx.moveTo(p00.x,p00.y);ctx.lineTo(p10.x,p10.y);ctx.lineTo(p11.x,p11.y);ctx.lineTo(p01.x,p01.y);ctx.closePath();ctx.fill();
-      ctx.strokeStyle='rgba(0,200,255,.1)';ctx.lineWidth=.5;ctx.stroke();
+      ctx.strokeStyle='rgba(0,200,255,.25)';ctx.lineWidth=.5;ctx.stroke();
     }
   }
 
   // Grid lines
-  var gc=CB.phase>=3?'rgba(0,200,255,.3)':'rgba(0,200,255,.18)';
+  var gc=CB.phase>=3?'rgba(0,220,255,.5)':'rgba(0,200,255,.35)';
   ctx.strokeStyle=gc;ctx.lineWidth=.8;
   for(var c=0;c<=8;c++){var pt=cbProj(c,0),pb=cbProj(c,8);ctx.beginPath();ctx.moveTo(pt.x,pt.y);ctx.lineTo(pb.x,pb.y);ctx.stroke()}
   for(var r=0;r<=8;r++){var pl=cbProj(0,r),pr=cbProj(8,r);ctx.beginPath();ctx.moveTo(pl.x,pl.y);ctx.lineTo(pr.x,pr.y);ctx.stroke()}
