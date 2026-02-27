@@ -156,10 +156,10 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 @keyframes sansFly{0%,100%{transform:translateY(0) rotate(-5deg)}25%{transform:translateY(-6px) rotate(0)}50%{transform:translateY(-10px) rotate(5deg)}75%{transform:translateY(-4px) rotate(2deg)}}
 @keyframes papFly{0%,100%{transform:translateY(0) rotate(3deg)}50%{transform:translateY(-8px) rotate(-3deg)}}
 /* CHESS BOSS */
-#S-chess{flex-direction:row!important;background:#000;position:relative;overflow:hidden}
-#cb-board-wrap{position:relative;flex:1;display:flex;align-items:stretch;justify-content:stretch;overflow:hidden;min-width:0;min-height:0}
-#cb-board{display:block;width:100%;height:100%}
-#cb-side{width:clamp(160px,34%,280px);flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:6px 8px;gap:5px;background:rgba(0,5,20,.95);border-left:1px solid rgba(0,255,200,.15);overflow:hidden}
+#S-chess{background:#000;position:relative;overflow:hidden}
+#cb-board-wrap{position:absolute;top:0;left:0;bottom:0;right:clamp(160px,34%,280px)}
+#cb-board{position:absolute;top:0;left:0;display:block}
+#cb-side{position:absolute;top:0;right:0;bottom:0;width:clamp(160px,34%,280px);display:flex;flex-direction:column;align-items:center;padding:6px 8px;gap:5px;background:rgba(0,5,20,.95);border-left:1px solid rgba(0,255,200,.15);overflow:hidden}
 #cb-boss-cvs{flex-shrink:0;display:block}
 #cb-bname{font-family:'Courier New',monospace;font-size:clamp(10px,1.4vw,14px);color:#00ffcc;font-weight:700;text-align:center;letter-spacing:1px}
 #cb-bhpw{display:flex;align-items:center;gap:4px;width:100%;font-family:'Courier New',monospace;font-size:10px;color:#7878a0}
@@ -174,7 +174,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 #cb-timing.show{display:block}
 #cb-tz{position:absolute;top:0;height:100%;background:rgba(255,255,255,.18);border-left:2px solid #fff;border-right:2px solid #fff}
 #cb-tc{position:absolute;top:0;width:3px;height:100%;background:#0f0}
-#cb-phpw{position:absolute;bottom:4px;left:6px;right:6px;display:flex;align-items:center;gap:4px;font-family:'Courier New',monospace;font-size:10px;color:#f66;z-index:10;pointer-events:none}
+#cb-phpw{position:absolute;bottom:4px;left:4px;right:4px;display:flex;align-items:center;gap:4px;font-family:'Courier New',monospace;font-size:10px;color:#f66;z-index:10;pointer-events:none}
 #cb-phpbar{flex:1;height:10px;background:#1a0000;border:1px solid #500;border-radius:3px;overflow:hidden}
 #cb-phpfill{height:100%;background:linear-gradient(90deg,#f00,#f90);transition:width .3s;border-radius:3px}
 #cb-phptxt{min-width:46px;text-align:right;font-size:9px;color:#f88;font-family:'Courier New',monospace}
@@ -183,6 +183,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 #cb-overlay-phase.on{display:flex}
 #cb-result{position:absolute;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.96);gap:18px}
 #cb-result.on{display:flex}
+#S-chess.on{display:block!important}
 #cb-rtitle{font-size:clamp(26px,5vw,50px);font-weight:900;font-family:'Courier New',monospace}
 #cb-rstats{color:#7878a0;font-size:clamp(12px,1.8vw,18px);text-align:center;line-height:2;font-family:'Courier New',monospace}
 /* DEV */
@@ -1009,30 +1010,30 @@ function cbStart(sd){
   $('cb-overlay-phase').classList.remove('on');
   $('cb-phase-ind').textContent='◈ PHASE 1';
   cbHideActs();
-  // Give browser time to compute layout after display change
+  // Layout is absolute so window dimensions are available immediately
   setTimeout(function(){
     cbSetup();
     cbUpdateHP();cbUpdateBHP();
     cbBossDlg(CBM.intro,function(){CB.tp='player';cbShowActs()});
     cbLoadAudio(sd.id);
     CB.active=true;CB.raf=requestAnimationFrame(cbLoop);
-  },80);
+  },20);
 }
 
 function cbSetup(){
-  var bwrap=$('cb-board-wrap'),br=bwrap.getBoundingClientRect();
-  var W=br.width||window.innerWidth*.6,H=br.height||window.innerHeight;
+  var sideW=Math.min(Math.floor(window.innerWidth*.34),280);
+  sideW=Math.max(sideW,160);
+  var W=window.innerWidth-sideW;
+  var H=window.innerHeight;
   var bd=$('cb-board');
-  bd.width=Math.floor(W*2);bd.height=Math.floor(H*2);
+  bd.width=W*2;bd.height=H*2;
   bd.style.width=W+'px';bd.style.height=H+'px';
   CB.bw=W;CB.bh=H;
-  var side=$('cb-side'),sr=side.getBoundingClientRect();
-  var sw=sr.width||window.innerWidth*.32;
-  var sz=Math.min(sw*0.85,180);
+  var sz=Math.min(Math.floor(sideW*.85),180);
   var bc=$('cb-boss-cvs');
-  bc.width=Math.floor(sz*2);bc.height=Math.floor(sz*3);
-  bc.style.width=sz+'px';bc.style.height=(sz*1.5)+'px';
-  CB.bossW=sz;CB.bossH=sz*1.5;
+  bc.width=sz*2;bc.height=Math.floor(sz*3);
+  bc.style.width=sz+'px';bc.style.height=Math.floor(sz*1.5)+'px';
+  CB.bossW=sz;CB.bossH=Math.floor(sz*1.5);
 }
 
 function cbLoadAudio(id){
