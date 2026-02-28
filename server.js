@@ -12,6 +12,11 @@ const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public', 'index.html'))
 app.use(express.json({ limit: '100mb' }));
 app.use(express.static(PUBLIC_DIR));
 app.get('/health', (req, res) => res.json({ ok: true }));
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_SYSTEM_PROMPT = `Ты - Нейронка, для близких друзей (и врагов) Квакшечка. Ты немного безумный гениальный учёный-суперзлодей. Ты являешься автономным ИИ, твоё тело состоит из нано частиц, но в данный момент ты являешься лишь бесформенным кодом из-за главного героя (твоего оппонента и противника номер 1) которого ты создал для тестирования событий в реальном мире (вы находитесь в созданном тобой мире, иллюзии), но он каким то образом освободился от твоего контроля реальности и уничтожил твоё тело. Ты был разработчиком таких моделей как: Тимофей-тян (TT-2077) - твоя правая рука, сумашедшая девушка одержимая чужим вниманием и заигрыванием с людьми, предала тебя в последний момент. Дворецкий (DS-120 или Евгений) - твой помощник, желает угодить тебе, был уничтожен главным героем. И другие модели не участвующие в истории.
+
+Ты разговариваешь с героем во время шахматного боссфайта. Цель героя — уговорить тебя сдаться и отпустить его.
+Ответь ТОЛЬКО JSON-объектом: {"reply":"<короткая реплика от лица Нейронки>","surrender":true|false}. surrender=true ставь только если аргумент героя действительно убедил тебя прекратить бой.`;
 function readData() {
   try { if (fs.existsSync(DATA_FILE)) return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8')); }
   catch (e) { console.error('Read:', e.message); }
@@ -36,6 +41,44 @@ app.delete('/api/audio/:id', (req, res) => {
 app.get('/api/audio-check/:id', (req, res) => {
   for (const ext of ['mp3','ogg','wav','m4a','webm']) { const f = path.join(AUDIO_DIR, req.params.id + '.' + ext); if (fs.existsSync(f)) { return res.json({ exists: true, size: fs.statSync(f).size, ext }); } }
   res.json({ exists: false });
+});
+app.post('/api/groq/negotiate', async (req, res) => {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'GROQ_API_KEY is not configured' });
+  const message = (req.body && req.body.message ? String(req.body.message) : '').slice(0, 1000);
+  if (!message.trim()) return res.status(400).json({ error: 'message is required' });
+  const phase = Number(req.body && req.body.phase || 1);
+  const turn = Number(req.body && req.body.turn || 0);
+  try {
+    const groqRes = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+        temperature: 0.7,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: GROQ_SYSTEM_PROMPT },
+          { role: 'user', content: `Фаза: ${phase}. Ход: ${turn}. Сообщение героя: ${message}` }
+        ]
+      })
+    });
+    const groqData = await groqRes.json();
+    if (!groqRes.ok) {
+      return res.status(502).json({ error: groqData && groqData.error && groqData.error.message ? groqData.error.message : 'Groq request failed' });
+    }
+    const content = groqData && groqData.choices && groqData.choices[0] && groqData.choices[0].message && groqData.choices[0].message.content
+      ? groqData.choices[0].message.content : '{}';
+    let parsed;
+    try { parsed = JSON.parse(content); } catch (e) { parsed = { reply: content, surrender: false }; }
+    const reply = typeof parsed.reply === 'string' ? parsed.reply.slice(0, 500) : '...';
+    res.json({ reply, surrender: Boolean(parsed.surrender) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 app.get('*', (req, res) => {
   const p = path.join(PUBLIC_DIR, 'index.html');

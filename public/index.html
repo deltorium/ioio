@@ -159,16 +159,9 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 #S-chess{flex-direction:row!important;background:#060c1a;position:relative;overflow:hidden}
 #cb-board-wrap{position:relative;z-index:1;flex:1;display:flex;align-items:stretch;justify-content:stretch;min-width:0}
 #cb-board{width:100%;height:100%;display:block}
-#cb-side{position:absolute;top:12px;right:12px;z-index:22;width:clamp(180px,24vw,280px);display:flex;flex-direction:column;align-items:center;padding:10px;gap:8px;background:linear-gradient(180deg,rgba(0,20,40,.86),rgba(0,10,25,.9));border:1px solid #00ffcc44;border-radius:10px;backdrop-filter:blur(4px);overflow:hidden}
-#cb-boss-cvs{display:none}
-#cb-bname{font-family:'Courier New',monospace;font-size:clamp(11px,1.5vw,15px);color:#00ffcc;font-weight:700;text-align:center;letter-spacing:1px;text-shadow:0 0 8px #00ffcc}
-#cb-bhpw{display:flex;align-items:center;gap:4px;width:100%;font-family:'Courier New',monospace;font-size:10px;color:#7878a0}
-#cb-bhpbar{flex:1;height:10px;background:#021020;border:1px solid #00ffcc44;border-radius:3px;overflow:hidden}
-#cb-bhpfill{height:100%;background:linear-gradient(90deg,#00ffcc,#00aaff);transition:width .4s;border-radius:3px}
-#cb-bhptxt{min-width:46px;text-align:right;font-size:9px;color:#7878a0;font-family:'Courier New',monospace}
-#cb-dlg{font-family:'Courier New',monospace;font-size:clamp(9px,1.1vw,12px);color:#aaddff;padding:6px 8px;background:#001428;border-radius:5px;border:1px solid #00ffcc33;width:100%;line-height:1.5;min-height:32px;word-break:break-word;flex-shrink:0}
-#cb-acts{display:flex;gap:5px;flex-shrink:0}
-.cb-btn{padding:clamp(6px,1vw,10px) clamp(10px,1.5vw,16px);background:#001428;border:2px solid #00ffcc;color:#00ffcc;font-family:'Courier New',monospace;font-size:clamp(11px,1.3vw,14px);font-weight:700;cursor:pointer;border-radius:5px;white-space:nowrap}
+#cb-feed{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);z-index:22;padding:9px 14px;background:rgba(0,18,35,.78);border:1px solid #00ffcc44;border-radius:9px;color:#aaddff;font-family:'Courier New',monospace;font-size:clamp(10px,1.25vw,13px);max-width:min(86vw,720px);text-align:center;line-height:1.45;backdrop-filter:blur(3px)}
+#cb-actions{position:absolute;right:14px;bottom:14px;z-index:23;display:flex;gap:8px;align-items:center}
+.cb-btn{padding:10px 14px;background:#001428;border:2px solid #00ffcc;color:#00ffcc;font-family:'Courier New',monospace;font-size:clamp(11px,1.2vw,13px);font-weight:700;cursor:pointer;border-radius:8px;white-space:nowrap}
 .cb-btn:disabled{opacity:.25;cursor:not-allowed}.cb-btn:hover:not(:disabled){background:#00ffcc;color:#000}
 #cb-timing{width:100%;height:22px;background:#000;border:2px solid #fff;position:relative;overflow:hidden;display:none;flex-shrink:0;border-radius:3px}
 #cb-timing.show{display:block}
@@ -318,13 +311,9 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
       <button class="bplay" id="cb-rbtn" style="font-size:15px;padding:12px 40px;font-family:monospace"></button>
     </div>
   </div>
-  <div id="cb-side">
-    <canvas id="cb-boss-cvs"></canvas>
-    <div id="cb-bname">NEURONKA.AI</div>
-    <div id="cb-dlg">> ...</div>
-    <div id="cb-acts">
-      <button class="cb-btn" onclick="cbAct('move')">♞ Ход</button>
-    </div>
+  <div id="cb-feed">> ...</div>
+  <div id="cb-actions">
+    <button class="cb-btn" onclick="cbAct('deal')">🤝 Договориться</button>
   </div>
 </div>
 </div>
@@ -963,6 +952,7 @@ var CB={
   pieces:[],validMoves:[],selMode:false,selPiece:null,walls:[],flip:false,
   abA:false,abX:0,abD:1,
   tp:'dialogue',
+  dealPending:false,
   bw:0,bh:0,bossW:0,bossH:0,
   t:0,shake:0,glitch:0,
   dangerSquares:[]
@@ -982,6 +972,7 @@ var CBM={
   losePiece:['> Ха. Ха.'],
   bossLost:['> Уязвимость в системе... Решение...'],
   checkBoss:['> Допущена ошибка...'],
+  trMix:['> Подмена протокола: ритм-атака из архива босса №3.','> Душа режима DS-120 вмешивается в шахматный поток.'],
   win:['> Ошибка... Резервное копирование... Неудача... Отправка аварийного сигнала... Неудача... ОтКлЮчЕнИе ИлЛюЗиИ...'],
   lose:['> Угроза иллюзии... Устранена.']
 };
@@ -1000,11 +991,11 @@ function cbStart(sd){
   cbStop();CB.sd=sd;
   CB.mhp=100;CB.hp=100;CB.bmhp=sd.utBossHp||3000;CB.bhp=CB.bmhp;
   CB.phase=1;CB.turn=0;CB.tp='dialogue';CB.inv=0;CB.t=0;
+  CB.dealPending=false;
   CB.shake=0;CB.glitch=0;CB.dangerSquares=[];
   CB.px=3;CB.py=6;CB.validMoves=[];CB.selMode=false;CB.selPiece=null;CB.abA=false;CB.flip=false;CB.walls=[];
   CB.pieces=[];cbSpawnPieces(1);
   var ch=sd.bfChar?findChar(sd.bfChar):null;
-  $('cb-bname').textContent='NEURONKA.AI';
   // Switch screen FIRST
   scr('S-chess');
   $('cb-result').classList.remove('on');
@@ -1316,11 +1307,11 @@ function cbSpawnPieces(phase){
   for(var c=0;c<8;c++){add(c,0,back[c],'black');add(c,1,'pawn','black');add(c,6,'pawn','white');add(c,7,back[c],'white')}
 }
 
-function cbShowActs(){var b=document.querySelectorAll('.cb-btn');for(var i=0;i<b.length;i++)b[i].disabled=false}
-function cbHideActs(){var b=document.querySelectorAll('.cb-btn');for(var i=0;i<b.length;i++)b[i].disabled=true}
-function cbBossDlg(lines,cb){CB.tp='dialogue';cbHideActs();var el=$('cb-dlg'),idx=0;function sh(){el.textContent=lines[Math.min(idx,lines.length-1)];idx++;if(idx<lines.length)setTimeout(sh,1400);else setTimeout(function(){if(cb)cb()},700)}sh()}
-function cbBMsg(txt){$('cb-dlg').textContent=txt}
-function cbUpdateBHP(){var bp=0;for(var i=0;i<CB.pieces.length;i++)if(CB.pieces[i].color==='black'&&CB.pieces[i].type!=='king')bp++;$('cb-bname').textContent='NEURONKA.AI — фигур: '+bp}
+function cbShowActs(){var b=document.querySelectorAll('#cb-actions .cb-btn');for(var i=0;i<b.length;i++)b[i].disabled=false}
+function cbHideActs(){var b=document.querySelectorAll('#cb-actions .cb-btn');for(var i=0;i<b.length;i++)b[i].disabled=true}
+function cbBossDlg(lines,cb){CB.tp='dialogue';cbHideActs();var el=$('cb-feed'),idx=0;function sh(){el.textContent=lines[Math.min(idx,lines.length-1)];idx++;if(idx<lines.length)setTimeout(sh,1400);else setTimeout(function(){if(cb)cb()},700)}sh()}
+function cbBMsg(txt){$('cb-feed').textContent=txt}
+function cbUpdateBHP(){var bp=0;for(var i=0;i<CB.pieces.length;i++)if(CB.pieces[i].color==='black'&&CB.pieces[i].type!=='king')bp++;$('cb-phase-ind').textContent='◈ PHASE '+CB.phase+' • NEURONKA.AI • фигур: '+bp}
 
 function cbIn(c,r){return c>=0&&c<8&&r>=0&&r<8}
 function cbPieceAt(c,r){for(var i=0;i<CB.pieces.length;i++){var p=CB.pieces[i];if(p.col===c&&p.row===r)return p}return null}
@@ -1398,10 +1389,58 @@ function cbPhaseTr(p){
 }
 
 function cbAct(type){
-  if(CB.tp!=='player'||type!=='move')return;
+  if(CB.tp!=='player')return;
+  if(type==='deal'){cbTryDeal();return}
   CB.selMode=true;
   CB.selPiece=null;CB.validMoves=[];
   cbBMsg('> Ходите по правилам шахмат. Цель — мат чёрному королю');
+}
+
+async function cbTryDeal(){
+  if(CB.dealPending)return;
+  var playerText=prompt('Что ты скажешь Нейронке, чтобы договориться?');
+  if(playerText===null)return;
+  var cleaned=(playerText||'').trim();
+  if(!cleaned){cbBMsg('> Пустой аргумент отклонён.');return}
+  CB.dealPending=true;cbHideActs();cbBMsg('> Анализ предложения...');
+  try{
+    var res=await fetch('/api/groq/negotiate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:cleaned,phase:CB.phase,turn:CB.turn})});
+    var data=await res.json();
+    if(!res.ok)throw new Error(data&&data.error?data.error:'request failed');
+    cbBMsg('> '+(data.reply||'...'));
+    if(data.surrender){
+      setTimeout(function(){if(CB.active)cbDealWin()},1200);
+      return;
+    }
+  }catch(e){
+    cbBMsg('> Канал переговоров недоступен: '+e.message);
+  }
+  CB.dealPending=false;
+  if(CB.active&&CB.tp==='player')cbShowActs();
+}
+
+function cbDealWin(){
+  cbStop();
+  $('cb-result').classList.add('on');
+  $('cb-rtitle').textContent='> СДЕЛКА ЗАКЛЮЧЕНА';
+  $('cb-rtitle').className='win';
+  $('cb-rstats').innerHTML='Нейронка признала автономность героя.<br>Победа: дипломатия вместо мата.<br>Ходов: '+CB.turn;
+  var btn=$('cb-rbtn'),sc=CB.sd;
+  btn.textContent='Продолжить';
+  btn.onclick=function(){$('cb-result').classList.remove('on');if(sc&&sc.next){scr('S-game');gameLoad(sc.next)}else{scr('S-game');gameEnd()}};
+}
+
+function cbCrossBossMoment(){
+  if(Math.random()>0.22)return;
+  cbBMsg(rp(CBM.trMix));
+  CB.glitch=900;CB.shake=320;
+  if(Math.random()<0.5){
+    CB.hp=Math.max(1,CB.hp-8);
+  }else{
+    var danger=[];
+    for(var i=0;i<3;i++)danger.push({c:Math.floor(Math.random()*8),r:Math.floor(Math.random()*8)});
+    CB.dangerSquares=danger;
+  }
 }
 
 function cbBossAbility(){
@@ -1466,6 +1505,7 @@ function cbEnemyTurn(){
   CB.tp='enemy';cbHideActs();CB.turn++;
 
   if(CB.turn%3===0)cbBossAbility();
+  cbCrossBossMoment();
 
   var best=null,score=-1e9;
   for(var i=0;i<CB.pieces.length;i++){
