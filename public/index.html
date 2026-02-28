@@ -1406,7 +1406,7 @@ function cbAct(type){
 
 function cbBossAbility(){
   var roll=Math.random(),lostPiece=false;
-  var canErase=cbNonKingCount('white')>0;
+  var canErase=cbNonKingCount('white')>1;
   if(roll<0.34){
     CB.flip=!CB.flip;
     CB.glitch=700;CB.shake=450;
