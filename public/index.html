@@ -388,8 +388,8 @@ function saveCh(){var n=$('ch-name').value.trim();if(!n)return toast('!',1);if(e
 function delCh(){if(!confirm('?'))return;D.chars=D.chars.filter(function(x){return x.id!==editId});save().then(function(){hideM('M-ch');renderTab()})}
 function rScenes(c){var h='<div class="dgrid">';D.scenes.forEach(function(sc){var isS=sc.id===D.start;var bg=D.bgs.find(function(b){return b.id===sc.bgId});h+='<div class="dcard'+(isS?' start':'')+'" onclick="eSc(\''+sc.id+'\')"><div class="dcimg" style="'+(bg?'background-image:url(\''+bg.data+'\')':'display:flex;align-items:center;justify-content:center;font-size:38px;color:#7878a0')+'">'+(!bg?'📜':'')+'</div><div class="dcinf"><div class="dcn">'+(sc.bossFight?'🎵 ':sc.utBoss?'💀 ':sc.chessBoss?'♟ ':'')+esc(sc.name)+'</div><div class="dcs">'+(isS?'⭐':sc.steps.length+'шаг')+'</div></div></div>'});h+='<div class="dcard dcadd" onclick="aSc()"><div class="ico">+</div><span>Добавить</span></div></div>';c.innerHTML=h}
 function mkStep(){return{chId:null,pos:'center',text:'',hasCh:false,choices:[]}}
-function aSc(){editId=null;eScData={id:uid(),name:'',bgId:null,steps:[mkStep()],next:null,bossFight:false,bfBpm:140,bfDur:60,bfSongName:'',bfChar:null,utBoss:false,utDiff:2,utBossHp:2000};$('sc-t').textContent='+';rScEd();showM('M-sc')}
-function eSc(id){var sc=D.scenes.find(function(s){return s.id===id});if(!sc)return;editId=id;eScData=JSON.parse(JSON.stringify(sc));if(!eScData.bfBpm)eScData.bfBpm=140;if(!eScData.bfDur)eScData.bfDur=60;if(!eScData.utDiff)eScData.utDiff=2;if(!eScData.utBossHp)eScData.utBossHp=2000;eScData.steps.forEach(function(s){if(s.hasCh===undefined)s.hasCh=!!(s.choices&&s.choices.length)});$('sc-t').textContent='Ред.';rScEd();showM('M-sc');if(editId)chkAudio(eScData.id)}
+function aSc(){editId=null;eScData={id:uid(),name:'',bgId:null,steps:[mkStep()],next:null,bossFight:false,bfBpm:140,bfDur:60,bfSongName:'',bfChar:null,utBoss:false,chessBoss:false,utDiff:2,utBossHp:2000};$('sc-t').textContent='+';rScEd();showM('M-sc')}
+function eSc(id){var sc=D.scenes.find(function(s){return s.id===id});if(!sc)return;editId=id;eScData=JSON.parse(JSON.stringify(sc));if(!eScData.bfBpm)eScData.bfBpm=140;if(!eScData.bfDur)eScData.bfDur=60;if(!eScData.utDiff)eScData.utDiff=2;if(!eScData.utBossHp)eScData.utBossHp=2000;if(eScData.chessBoss===undefined)eScData.chessBoss=false;eScData.steps.forEach(function(s){if(s.hasCh===undefined)s.hasCh=!!(s.choices&&s.choices.length)});$('sc-t').textContent='Ред.';rScEd();showM('M-sc');if(editId)chkAudio(eScData.id)}
 function chkAudio(id){fetch('/api/audio-check/'+id).then(function(r){return r.json()}).then(function(d){var el=document.getElementById('bf-ast');if(!el)return;if(d.exists)el.innerHTML='<div class="audio-info"><span class="ai-name">🎵 ('+(d.size/1024/1024).toFixed(1)+'МБ)</span><button onclick="pvAud(\''+id+'\')">▶</button><button onclick="dlAud(\''+id+'\')">✕</button></div>';else el.innerHTML='<div style="color:#7878a0;font-size:12px;margin-top:6px">Авто-генерация</div>'}).catch(function(){})}
 function ulAud(inp){if(!inp.files[0]||!eScData)return;var f=inp.files[0];var ext=f.name.split('.').pop();var el=document.getElementById('bf-ast');if(el)el.innerHTML='<div style="color:#ffcc00;font-size:13px">⏳...</div>';var r=new FileReader;r.onload=function(){fetch('/api/audio/'+eScData.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:r.result.split(',')[1],ext:ext})}).then(function(r){return r.json()}).then(function(d){if(d.ok){toast('🎵 OK');chkAudio(eScData.id)}else toast('!',1)}).catch(function(){toast('!',1)})};r.readAsDataURL(f)}
 function pvAud(id){if(window._pa){window._pa.pause();window._pa=null;return}window._pa=new Audio('/api/audio/'+id);window._pa.volume=.5;window._pa.play().catch(function(){});setTimeout(function(){if(window._pa){window._pa.pause();window._pa=null}},10000)}
@@ -1004,34 +1004,51 @@ function cbStart(sd){
   CB.pieces=[];cbSpawnPieces(1);
   var ch=sd.bfChar?findChar(sd.bfChar):null;
   $('cb-bname').textContent=ch?ch.name:'SYSTEM.exe';
+  // Switch screen FIRST
   scr('S-chess');
   $('cb-result').classList.remove('on');
   $('cb-overlay-phase').classList.remove('on');
   $('cb-phase-ind').textContent='◈ PHASE 1';
   cbHideActs();
-  requestAnimationFrame(function(){requestAnimationFrame(function(){
+  // Wait for paint then setup
+  function doStart(){
     cbSetup();
     cbUpdateHP();cbUpdateBHP();
     cbBossDlg(CBM.intro,function(){CB.tp='player';cbShowActs()});
     cbLoadAudio(sd.id);
-    CB.active=true;CB.raf=requestAnimationFrame(cbLoop);
-  })});
+    CB.active=true;
+    CB.raf=requestAnimationFrame(cbLoop);
+  }
+  // Triple rAF to be absolutely sure layout is done
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      requestAnimationFrame(doStart);
+    });
+  });
 }
 
 function cbSetup(){
-  var bw=$('cb-board-wrap'),br=bw.getBoundingClientRect();
-  var W=br.width||300,H=br.height||400;
-  var bd=$('cb-board');
-  bd.width=Math.floor(W*2);bd.height=Math.floor(H*2);
-  bd.style.width=W+'px';bd.style.height=H+'px';
+  // Use window dimensions — 100% reliable regardless of flex layout
+  var sideW=Math.max(160,Math.min(Math.round(window.innerWidth*.32),260));
+  var W=window.innerWidth-sideW;
+  var H=window.innerHeight;
   CB.bw=W;CB.bh=H;
-  var sd=$('cb-side'),sr=sd.getBoundingClientRect();
-  var sw=sr.width||200;
-  var sz=Math.min(Math.floor(sw*.85),180);
+  var bd=$('cb-board');
+  bd.width=W*2;bd.height=H*2;
+  bd.style.cssText='display:block;position:absolute;top:0;left:0;width:'+W+'px;height:'+H+'px';
+  // Side panel width
+  var sd=$('cb-side');
+  sd.style.width=sideW+'px';
+  var sz=Math.min(Math.round(sideW*.82),170);
   var bc=$('cb-boss-cvs');
-  bc.width=sz*2;bc.height=Math.floor(sz*3);
-  bc.style.width=sz+'px';bc.style.height=Math.floor(sz*1.5)+'px';
-  CB.bossW=sz;CB.bossH=Math.floor(sz*1.5);
+  bc.width=sz*2;bc.height=Math.round(sz*2.8);
+  bc.style.width=sz+'px';bc.style.height=Math.round(sz*1.4)+'px';
+  CB.bossW=sz;CB.bossH=Math.round(sz*1.4);
+  // Debug: paint bright test rect to confirm canvas works
+  var ctx=bd.getContext('2d');
+  ctx.fillStyle='#001a33';ctx.fillRect(0,0,bd.width,bd.height);
+  ctx.fillStyle='#00ffcc';ctx.font='bold 28px monospace';
+  ctx.fillText('Loading... '+W+'x'+H,40,60);
 }
 
 function cbLoadAudio(id){
