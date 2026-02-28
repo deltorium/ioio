@@ -1003,6 +1003,7 @@ function cbStart(sd){
   CB.shake=0;CB.glitch=0;CB.dangerSquares=[];
   CB.px=3;CB.py=6;CB.validMoves=[];CB.selMode=false;CB.selPiece=null;CB.abA=false;CB.flip=false;CB.walls=[];
   CB.pieces=[];cbSpawnPieces(1);
+  var ch=sd.bfChar?findChar(sd.bfChar):null;
   $('cb-bname').textContent='NEURONKA.AI';
   // Switch screen FIRST
   scr('S-chess');
@@ -1014,7 +1015,7 @@ function cbStart(sd){
   function doStart(){
     cbSetup();
     cbUpdateBHP();
-    cbBossDlg(CBM.intro,function(){CB.tp='player';cbShowActs()});
+CBM.intro,function(){CB.tp='player';cbShowActs()});
     cbLoadAudio(sd.id);
     CB.active=true;
     CB.raf=requestAnimationFrame(cbLoop);
@@ -1440,15 +1441,14 @@ function cbTileClick(e){
       if(cap){
         cbRemoveAt(cell.c,cell.r);
         cbBMsg(rp(CBM.bossLost));
+        setTimeout(cbBossAbility,350);
       }
       CB.selPiece.col=cell.c;CB.selPiece.row=cell.r;CB.selPiece.moved=true;
       CB.selPiece=null;CB.validMoves=[];CB.selMode=false;
       cbUpdateBHP();
       if(cbCheckmate('black')){cbEnd(true);return}
-      if(cbRefillAfterKingsOnly()){cbUpdateBHP();setTimeout(function(){if(CB.active)cbEnemyTurn()},500);return}
-      if(cap){setTimeout(function(){if(CB.active)cbBossAbility()},350)}
       if(cbIsCheck('black'))cbBMsg(rp(CBM.checkBoss));
-      setTimeout(function(){if(CB.active)cbEnemyTurn()},500);return;
+      setTimeout(cbEnemyTurn,500);return;
     }
   }
 
