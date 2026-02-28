@@ -13,6 +13,44 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.static(PUBLIC_DIR));
 app.get('/health', (req, res) => res.json({ ok: true }));
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_TIMEOUT_MS = Number(process.env.GROQ_TIMEOUT_MS || 15000);
+const GROQ_KEY_STATE = { idx: 0 };
+
+function groqKeyPool() {
+  const fromSingle = process.env.GROQ_API_KEY ? [process.env.GROQ_API_KEY] : [];
+  const fromList = (process.env.GROQ_API_KEYS || '')
+    .split(/[\n,;]+/)
+    .map((k) => k.trim())
+    .filter(Boolean);
+  const all = [...fromSingle, ...fromList];
+  return [...new Set(all)];
+}
+
+function shouldRotateGroqKey(status) {
+  return status === 401 || status === 403 || status === 429 || status >= 500;
+}
+
+async function groqRequest(apiKey, payload) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS);
+  try {
+    const response = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    const raw = await response.text();
+    let data = null;
+    try { data = raw ? JSON.parse(raw) : null; } catch (e) {}
+    return { ok: response.ok, status: response.status, data, raw };
+  } finally {
+    clearTimeout(timer);
+  }
+}
 const GROQ_SYSTEM_PROMPT = `Ты - Нейронка, для близких друзей (и врагов) Квакшечка. Ты немного безумный гениальный учёный-суперзлодей. Ты являешься автономным ИИ, твоё тело состоит из нано частиц, но в данный момент ты являешься лишь бесформенным кодом из-за главного героя (твоего оппонента и противника номер 1) которого ты создал для тестирования событий в реальном мире (вы находитесь в созданном тобой мире, иллюзии), но он каким то образом освободился от твоего контроля реальности и уничтожил твоё тело. Ты был разработчиком таких моделей как: Тимофей-тян (TT-2077) - твоя правая рука, сумашедшая девушка одержимая чужим вниманием и заигрыванием с людьми, предала тебя в последний момент. Дворецкий (DS-120 или Евгений) - твой помощник, желает угодить тебе, был уничтожен главным героем. И другие модели не участвующие в истории.
 
 Ты разговариваешь с героем во время шахматного боссфайта. Цель героя — уговорить тебя сдаться и отпустить его.
@@ -43,42 +81,59 @@ app.get('/api/audio-check/:id', (req, res) => {
   res.json({ exists: false });
 });
 app.post('/api/groq/negotiate', async (req, res) => {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return res.status(503).json({ error: 'GROQ_API_KEY is not configured' });
+  const keys = groqKeyPool();
+  if (!keys.length) return res.status(503).json({ error: 'GROQ_API_KEY is not configured' });
+
   const message = (req.body && req.body.message ? String(req.body.message) : '').slice(0, 1000);
   if (!message.trim()) return res.status(400).json({ error: 'message is required' });
+
   const phase = Number(req.body && req.body.phase || 1);
   const turn = Number(req.body && req.body.turn || 0);
-  try {
-    const groqRes = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-        temperature: 0.7,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: GROQ_SYSTEM_PROMPT },
-          { role: 'user', content: `Фаза: ${phase}. Ход: ${turn}. Сообщение героя: ${message}` }
-        ]
-      })
-    });
-    const groqData = await groqRes.json();
-    if (!groqRes.ok) {
-      return res.status(502).json({ error: groqData && groqData.error && groqData.error.message ? groqData.error.message : 'Groq request failed' });
+  const payload = {
+    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    temperature: 0.7,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: GROQ_SYSTEM_PROMPT },
+      { role: 'user', content: `Фаза: ${phase}. Ход: ${turn}. Сообщение героя: ${message}` }
+    ]
+  };
+
+  let pointer = GROQ_KEY_STATE.idx % keys.length;
+  let lastErr = 'Groq request failed';
+  const maxAttempts = Math.min(keys.length, 3);
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const key = keys[pointer];
+    try {
+      const result = await groqRequest(key, payload);
+      if (!result.ok) {
+        lastErr = result.data && result.data.error && result.data.error.message
+          ? result.data.error.message
+          : `Groq request failed with status ${result.status}`;
+        if (shouldRotateGroqKey(result.status)) {
+          pointer = (pointer + 1) % keys.length;
+          continue;
+        }
+        break;
+      }
+
+      GROQ_KEY_STATE.idx = pointer;
+      const content = result.data && result.data.choices && result.data.choices[0] && result.data.choices[0].message && result.data.choices[0].message.content
+        ? result.data.choices[0].message.content
+        : '{}';
+      let parsed;
+      try { parsed = JSON.parse(content); } catch (e) { parsed = { reply: content, surrender: false }; }
+      const reply = typeof parsed.reply === 'string' ? parsed.reply.slice(0, 500) : '...';
+      return res.json({ reply, surrender: Boolean(parsed.surrender) });
+    } catch (e) {
+      lastErr = e.name === 'AbortError' ? 'Groq request timeout' : e.message;
+      pointer = (pointer + 1) % keys.length;
     }
-    const content = groqData && groqData.choices && groqData.choices[0] && groqData.choices[0].message && groqData.choices[0].message.content
-      ? groqData.choices[0].message.content : '{}';
-    let parsed;
-    try { parsed = JSON.parse(content); } catch (e) { parsed = { reply: content, surrender: false }; }
-    const reply = typeof parsed.reply === 'string' ? parsed.reply.slice(0, 500) : '...';
-    res.json({ reply, surrender: Boolean(parsed.surrender) });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
   }
+
+  GROQ_KEY_STATE.idx = pointer;
+  res.status(502).json({ error: lastErr });
 });
 app.get('*', (req, res) => {
   const p = path.join(PUBLIC_DIR, 'index.html');
