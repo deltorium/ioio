@@ -390,7 +390,7 @@ function impD(inp){if(!inp.files[0])return;inp.files[0].text().then(function(t){
 function clearAll(){if(!confirm('ВСЁ?'))return;D={title:'Visual Novel',bgs:[],chars:[],scenes:[],start:null};save().then(function(){renderTab();updateMenu()})}
 
 /* ═══ NOVEL ═══ */
-function startGame(){if(!isAdmin&&Date.now()<TARGET){showWaitRoom();return}loadData().then(function(ok){if(!ok){toast('!',1);return}updateMenu();var ss=findScene(D.start);if(!ss||!ss.steps||!ss.steps.length){toast('Пусто!',1);return}scr('S-game');$('g-end').classList.remove('on');$('g-choices').classList.remove('on');$('g-char').style.display='none';$('g-name').textContent='';$('g-txt').textContent='';gameLoad(D.start)})}
+function startGame(){if(!isAdmin){$('menu-status').innerHTML='<div class="st-no">ОШИБКА: TT-2077 НЕ НАЙДЕН</div>';return}loadData().then(function(ok){if(!ok){toast('!',1);return}updateMenu();var ss=findScene(D.start);if(!ss||!ss.steps||!ss.steps.length){toast('Пусто!',1);return}scr('S-game');$('g-end').classList.remove('on');$('g-choices').classList.remove('on');$('g-char').style.display='none';$('g-name').textContent='';$('g-txt').textContent='';gameLoad(D.start)})}
 function findScene(id){for(var i=0;i<D.scenes.length;i++)if(D.scenes[i].id===id)return D.scenes[i];return null}
 function findChar(id){for(var i=0;i<D.chars.length;i++)if(D.chars[i].id===id)return D.chars[i];return null}
 function findBg(id){for(var i=0;i<D.bgs.length;i++)if(D.bgs[i].id===id)return D.bgs[i];return null}
