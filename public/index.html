@@ -1014,8 +1014,8 @@ function cbStart(sd){
   // Wait for paint then setup
   function doStart(){
     cbSetup();
-    cbUpdateHP();cbUpdateBHP();
-    cbBossDlg(CBM.intro,function(){CB.tp='player';cbShowActs()});
+    cbUpdateBHP();
+CBM.intro,function(){CB.tp='player';cbShowActs()});
     cbLoadAudio(sd.id);
     CB.active=true;
     CB.raf=requestAnimationFrame(cbLoop);
@@ -1320,7 +1320,6 @@ function cbShowActs(){var b=document.querySelectorAll('.cb-btn');for(var i=0;i<b
 function cbHideActs(){var b=document.querySelectorAll('.cb-btn');for(var i=0;i<b.length;i++)b[i].disabled=true}
 function cbBossDlg(lines,cb){CB.tp='dialogue';cbHideActs();var el=$('cb-dlg'),idx=0;function sh(){el.textContent=lines[Math.min(idx,lines.length-1)];idx++;if(idx<lines.length)setTimeout(sh,1400);else setTimeout(function(){if(cb)cb()},700)}sh()}
 function cbBMsg(txt){$('cb-dlg').textContent=txt}
-function cbUpdateHP(){}
 function cbUpdateBHP(){var bp=0;for(var i=0;i<CB.pieces.length;i++)if(CB.pieces[i].color==='black'&&CB.pieces[i].type!=='king')bp++;$('cb-bname').textContent='NEURONKA.AI — фигур: '+bp}
 
 function cbIn(c,r){return c>=0&&c<8&&r>=0&&r<8}
@@ -1328,6 +1327,29 @@ function cbPieceAt(c,r){for(var i=0;i<CB.pieces.length;i++){var p=CB.pieces[i];i
 function cbIsWall(c,r){for(var i=0;i<CB.walls.length;i++)if(CB.walls[i].c===c&&CB.walls[i].r===r)return true;return false}
 function cbRemoveAt(c,r){for(var i=CB.pieces.length-1;i>=0;i--){if(CB.pieces[i].col===c&&CB.pieces[i].row===r){CB.pieces.splice(i,1);return}}}
 function cbFindKing(color){for(var i=0;i<CB.pieces.length;i++){var p=CB.pieces[i];if(p.color===color&&p.type==='king')return p}return null}
+
+function cbNonKingCount(color){var n=0;for(var i=0;i<CB.pieces.length;i++){var p=CB.pieces[i];if(p.color===color&&p.type!=='king')n++}return n}
+function cbOnlyTwoKings(){
+  if(CB.pieces.length!==2)return false;
+  return CB.pieces[0].type==='king'&&CB.pieces[1].type==='king';
+}
+function cbShuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function cbRefillAfterKingsOnly(){
+  if(!cbOnlyTwoKings())return false;
+  var cells=[];
+  for(var r=0;r<8;r++)for(var c=0;c<8;c++)if(!cbPieceAt(c,r))cells.push({c:c,r:r});
+  cbShuffle(cells);
+  var types=['pawn','knight','bishop','rook','queen'];
+  var make=function(color){return types[Math.floor(Math.random()*types.length)]};
+  for(var i=0;i<cells.length;i++){
+    var color=i<cells.length/2?'white':'black';
+    var t=make(color);
+    var sym={king:color==='white'?'♔':'♚',queen:color==='white'?'♕':'♛',rook:color==='white'?'♖':'♜',bishop:color==='white'?'♗':'♝',knight:color==='white'?'♘':'♞',pawn:color==='white'?'♙':'♟'}[t];
+    CB.pieces.push({col:cells[i].c,row:cells[i].r,type:t,color:color,sym:sym,moved:true});
+  }
+  cbBMsg('> Изменение парадигмы... Поле перезаполнено.');
+  return true;
+}
 
 function cbPseudoMoves(p,atkOnly){
   var m=[],add=function(c,r){if(cbIn(c,r)&&!cbIsWall(c,r))m.push({c:c,r:r})};
@@ -1376,34 +1398,34 @@ function cbPhaseTr(p){
 }
 
 function cbAct(type){
-  if(CB.tp!=='player')return;
+  if(CB.tp!=='player'||type!=='move')return;
   CB.selMode=true;
-  if(type==='atk')cbBMsg('> Выбери фигуру и сделай ход (обычные шахматы)');
-  else{CB.selPiece=null;CB.validMoves=[];cbBMsg('> Ходите по правилам шахмат. Цель — мат чёрному королю')}
+  CB.selPiece=null;CB.validMoves=[];
+  cbBMsg('> Ходите по правилам шахмат. Цель — мат чёрному королю');
 }
-
-function cbHitAtk(){}
 
 function cbBossAbility(){
   var roll=Math.random(),lostPiece=false;
+  var canErase=cbNonKingCount('white')>0;
   if(roll<0.34){
     CB.flip=!CB.flip;
     CB.glitch=700;CB.shake=450;
-  }else if(roll<0.67){
+  }else if(roll<0.67&&canErase){
     var whites=[];for(var i=0;i<CB.pieces.length;i++){var p=CB.pieces[i];if(p.color==='white'&&p.type!=='king')whites.push(p)}
     if(whites.length){var v=whites[Math.floor(Math.random()*whites.length)];cbRemoveAt(v.col,v.row);lostPiece=true;}
   }else{
     var tries=0;
     while(tries<40){tries++;var c=Math.floor(Math.random()*8),r=Math.floor(Math.random()*8);if(cbPieceAt(c,r)||cbIsWall(c,r))continue;if((c===4&&r===0)||(c===4&&r===7))continue;CB.walls.push({c:c,r:r});CB.dangerSquares=[{c:c,r:r}];break}
   }
-  if(lostPiece){cbBMsg(rp(CBM.losePiece));setTimeout(function(){cbBMsg(rp(CBM.cheat))},650)}
-  else cbBMsg(rp(CBM.cheat));
+  if(lostPiece){cbBMsg(rp(CBM.losePiece));setTimeout(function(){if(!CB.active)return;cbBMsg(rp(CBM.cheat));cbRefillAfterKingsOnly();cbUpdateBHP()},650)}
+  else {cbBMsg(rp(CBM.cheat));cbRefillAfterKingsOnly();cbUpdateBHP()}
 }
 
 function cbBoardCellFromPoint(mx,my){
-  var best={c:0,r:0,d:1e9};
-  for(var r=0;r<8;r++)for(var c=0;c<8;c++){var tc=cbTileC(c,r),d=Math.hypot(mx-tc.x,my-tc.y);if(d<best.d)best={c:c,r:r,d:d}};
-  return best.d<140?{c:best.c,r:best.r}:null;
+  var best={c:0,r:0,d:1e9},cell=0;
+  for(var r=0;r<8;r++)for(var c=0;c<8;c++){var tc=cbTileC(c,r),d=Math.hypot(mx-tc.x,my-tc.y);if(c===0&&r===0)cell=tc.sz;if(d<best.d)best={c:c,r:r,d:d}};
+  var hit=Math.max(26,cell*.85);
+  return best.d<hit?{c:best.c,r:best.r}:null;
 }
 
 function cbTileClick(e){
@@ -1462,6 +1484,7 @@ function cbEnemyTurn(){
   best.p.col=best.t.c;best.p.row=best.t.r;best.p.moved=true;
 
   cbUpdateBHP();
+  if(cbRefillAfterKingsOnly()){cbUpdateBHP()}
   if(cbCheckmate('white')){cbEnd(false);return}
   if(cbIsCheck('white'))cbBMsg(rp(CBM.atk));
   else if(!cap)cbBMsg(rp(CBM.cheat));
@@ -1507,7 +1530,6 @@ document.addEventListener('click',function(e){if(!UT.active)return;if(UT.tp==='d
   var bd=$('cb-board');
   bd.addEventListener('click',cbTileClick);
   bd.addEventListener('touchend',function(e){e.preventDefault();cbTileClick(e)},{passive:false});
-  document.addEventListener('click',function(e){if(CB.active&&CB.tp==='attack'&&CB.abA)cbHitAtk()});
 })();
 (function(){if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand()}loadData().then(function(){updateMenu();$('loader').classList.add('hide');setTimeout(function(){$('loader').style.display='none'},600)})})();
 </script>
