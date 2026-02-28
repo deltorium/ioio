@@ -161,6 +161,13 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 #cb-board{width:100%;height:100%;display:block}
 #cb-feed{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);z-index:22;padding:9px 14px;background:rgba(0,18,35,.78);border:1px solid #00ffcc44;border-radius:9px;color:#aaddff;font-family:'Courier New',monospace;font-size:clamp(10px,1.25vw,13px);max-width:min(86vw,720px);text-align:center;line-height:1.45;backdrop-filter:blur(3px)}
 #cb-actions{position:absolute;right:14px;bottom:14px;z-index:23;display:flex;gap:8px;align-items:center}
+#cb-chat{position:absolute;left:50%;bottom:74px;transform:translateX(-50%);z-index:24;display:none;gap:8px;align-items:center;width:min(92vw,720px);padding:10px;background:rgba(0,12,28,.94);border:1px solid #00ffcc66;border-radius:10px;backdrop-filter:blur(3px)}
+#cb-chat.on{display:flex}
+#cb-chat-input{flex:1;padding:10px 12px;background:#020d1f;border:1px solid #00ffcc55;border-radius:8px;color:#d9f8ff;font-family:'Courier New',monospace;font-size:13px}
+#cb-chat-input::placeholder{color:#6ea0ae}
+#cb-chat-input:disabled{opacity:.45}
+.cb-chat-btn{padding:9px 12px;background:#001428;border:1px solid #00ffcc;color:#00ffcc;font-family:'Courier New',monospace;font-size:12px;font-weight:700;cursor:pointer;border-radius:8px;white-space:nowrap}
+.cb-chat-btn:disabled{opacity:.3;cursor:not-allowed}
 .cb-btn{padding:10px 14px;background:#001428;border:2px solid #00ffcc;color:#00ffcc;font-family:'Courier New',monospace;font-size:clamp(11px,1.2vw,13px);font-weight:700;cursor:pointer;border-radius:8px;white-space:nowrap}
 .cb-btn:disabled{opacity:.25;cursor:not-allowed}.cb-btn:hover:not(:disabled){background:#00ffcc;color:#000}
 #cb-timing{width:100%;height:22px;background:#000;border:2px solid #fff;position:relative;overflow:hidden;display:none;flex-shrink:0;border-radius:3px}
@@ -312,6 +319,11 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
     </div>
   </div>
   <div id="cb-feed">> ...</div>
+  <div id="cb-chat">
+    <input id="cb-chat-input" type="text" maxlength="240" placeholder="Что ты скажешь Нейронке?.." onkeydown="cbChatKey(event)">
+    <button class="cb-chat-btn" id="cb-chat-send" onclick="cbSendDeal()">Отправить</button>
+    <button class="cb-chat-btn" onclick="cbHideDealInput()">Отмена</button>
+  </div>
   <div id="cb-actions">
     <button class="cb-btn" onclick="cbAct('deal')">🤝 Договориться</button>
   </div>
@@ -992,6 +1004,7 @@ function cbStart(sd){
   CB.mhp=100;CB.hp=100;CB.bmhp=sd.utBossHp||3000;CB.bhp=CB.bmhp;
   CB.phase=1;CB.turn=0;CB.tp='dialogue';CB.inv=0;CB.t=0;
   CB.dealPending=false;
+  cbHideDealInput();
   CB.shake=0;CB.glitch=0;CB.dangerSquares=[];
   CB.px=3;CB.py=6;CB.validMoves=[];CB.selMode=false;CB.selPiece=null;CB.abA=false;CB.flip=false;CB.walls=[];
   CB.pieces=[];cbSpawnPieces(1);
@@ -1001,6 +1014,7 @@ function cbStart(sd){
   $('cb-result').classList.remove('on');
   $('cb-overlay-phase').classList.remove('on');
   $('cb-phase-ind').textContent='◈ PHASE 1';
+  cbHideDealInput();
   cbHideActs();
   // Wait for paint then setup
   function doStart(){
@@ -1390,19 +1404,46 @@ function cbPhaseTr(p){
 
 function cbAct(type){
   if(CB.tp!=='player')return;
-  if(type==='deal'){cbTryDeal();return}
+  if(type==='deal'){cbShowDealInput();return}
+  cbHideDealInput();
   CB.selMode=true;
   CB.selPiece=null;CB.validMoves=[];
   cbBMsg('> Ходите по правилам шахмат. Цель — мат чёрному королю');
 }
 
-async function cbTryDeal(){
+function cbShowDealInput(){
   if(CB.dealPending)return;
-  var playerText=prompt('Что ты скажешь Нейронке, чтобы договориться?');
-  if(playerText===null)return;
-  var cleaned=(playerText||'').trim();
+  var chat=$('cb-chat');
+  if(!chat)return;
+  chat.classList.add('on');
+  var input=$('cb-chat-input');
+  if(input){input.value='';input.disabled=false;input.focus()}
+}
+
+function cbHideDealInput(){
+  var chat=$('cb-chat');
+  if(chat)chat.classList.remove('on');
+}
+
+function cbChatKey(e){
+  if(e.key==='Escape'){cbHideDealInput();return}
+  if(e.key==='Enter'&&!e.shiftKey){
+    e.preventDefault();
+    cbSendDeal();
+  }
+}
+
+async function cbSendDeal(){
+  if(CB.dealPending)return;
+  var input=$('cb-chat-input');
+  var cleaned=input&&input.value?input.value.trim():'';
   if(!cleaned){cbBMsg('> Пустой аргумент отклонён.');return}
-  CB.dealPending=true;cbHideActs();cbBMsg('> Анализ предложения...');
+  CB.dealPending=true;
+  cbHideActs();
+  cbBMsg('> Анализ предложения...');
+  if(input)input.disabled=true;
+  var sendBtn=$('cb-chat-send');
+  if(sendBtn)sendBtn.disabled=true;
   try{
     var res=await fetch('/api/groq/negotiate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:cleaned,phase:CB.phase,turn:CB.turn})});
     var data=await res.json();
@@ -1416,6 +1457,9 @@ async function cbTryDeal(){
     cbBMsg('> Канал переговоров недоступен: '+e.message);
   }
   CB.dealPending=false;
+  if(input)input.disabled=false;
+  if(sendBtn)sendBtn.disabled=false;
+  cbHideDealInput();
   if(CB.active&&CB.tp==='player')cbShowActs();
 }
 
