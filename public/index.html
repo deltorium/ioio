@@ -1015,7 +1015,7 @@ function cbStart(sd){
   function doStart(){
     cbSetup();
     cbUpdateBHP();
-CBM.intro,function(){CB.tp='player';cbShowActs()});
+cbBMsg(rp(CBM.intro));CB.tp='player';cbShowActs();
     cbLoadAudio(sd.id);
     CB.active=true;
     CB.raf=requestAnimationFrame(cbLoop);
