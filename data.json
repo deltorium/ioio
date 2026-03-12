@@ -1,0 +1,115 @@
+{
+  "title": "Квакшечка: Финальный акт",
+  "bgs": [
+    {
+      "id": "bg_hall",
+      "name": "Зал особняка",
+      "data": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%231a1a2e'/><stop offset='1' stop-color='%2331184f'/></linearGradient></defs><rect width='1280' height='720' fill='url(%23g)'/><circle cx='1040' cy='140' r='110' fill='%23ffe3a3' opacity='0.15'/></svg>"
+    },
+    {
+      "id": "bg_stage",
+      "name": "Арена" ,
+      "data": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><defs><linearGradient id='g2' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2322152f'/><stop offset='1' stop-color='%23070b1f'/></linearGradient></defs><rect width='1280' height='720' fill='url(%23g2)'/><rect x='0' y='560' width='1280' height='160' fill='%23000000' opacity='0.45'/></svg>"
+    }
+  ],
+  "chars": [
+    {
+      "id": "hero",
+      "name": "Герой",
+      "data": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 560'><rect width='420' height='560' fill='none'/><circle cx='210' cy='150' r='75' fill='%23ffe1bf'/><rect x='125' y='230' width='170' height='220' rx='24' fill='%2342a5f5'/><rect x='145' y='270' width='130' height='24' rx='8' fill='%23ffffff' opacity='0.7'/></svg>"
+    },
+    {
+      "id": "butler",
+      "name": "Дворецкий",
+      "data": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 560'><rect width='420' height='560' fill='none'/><circle cx='210' cy='150' r='75' fill='%23f3d2c1'/><rect x='120' y='228' width='180' height='235' rx='20' fill='%23121212'/><rect x='170' y='252' width='80' height='170' fill='%23ffffff'/><path d='M170 310 L250 310 L210 350 Z' fill='%23d61f2c'/></svg>"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene_intro",
+      "name": "Перед бурей",
+      "bgId": "bg_hall",
+      "steps": [
+        {
+          "charId": "butler",
+          "pos": "right",
+          "text": "Хозяин пал... но его приказ жив. Последняя подача — ваш финал.",
+          "hasCh": false,
+          "choices": []
+        },
+        {
+          "charId": "hero",
+          "pos": "left",
+          "text": "Евгений, остановись. Никто больше не должен погибнуть.",
+          "hasCh": false,
+          "choices": []
+        },
+        {
+          "charId": "butler",
+          "pos": "right",
+          "text": "Тогда переживите сервиса Cuphead.",
+          "hasCh": false,
+          "choices": []
+        }
+      ],
+      "next": "scene_ready"
+    },
+    {
+      "id": "scene_ready",
+      "name": "Последний тост",
+      "bgId": "bg_stage",
+      "steps": [
+        {
+          "charId": "butler",
+          "pos": "center",
+          "text": "На арене — только пули, ритм и безупречные манеры.",
+          "hasCh": false,
+          "choices": []
+        },
+        {
+          "charId": "hero",
+          "pos": "left",
+          "text": "Я приму бой. И после него мы закончим этот кошмар.",
+          "hasCh": false,
+          "choices": []
+        }
+      ],
+      "next": "scene_final_boss"
+    },
+    {
+      "id": "scene_final_boss",
+      "name": "Final Boss: Дворецкий",
+      "bgId": "bg_stage",
+      "steps": [],
+      "next": "scene_epilogue",
+      "bossFight": true,
+      "bfChar": "butler",
+      "bfSongName": "CUPHEAD STYLE // The Last Service",
+      "bfBpm": 176,
+      "bfDur": 95
+    },
+    {
+      "id": "scene_epilogue",
+      "name": "После сервиса",
+      "bgId": "bg_hall",
+      "steps": [
+        {
+          "charId": "butler",
+          "pos": "right",
+          "text": "...Обслуживание завершено. Я свободен от приказа.",
+          "hasCh": false,
+          "choices": []
+        },
+        {
+          "charId": "hero",
+          "pos": "left",
+          "text": "Спасибо. Теперь мы закроем историю Нейронки навсегда.",
+          "hasCh": false,
+          "choices": []
+        }
+      ],
+      "next": null
+    }
+  ],
+  "start": "scene_intro"
+}
